@@ -1,0 +1,232 @@
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: #1b1b2f;
+  color: #fff;
+}
+
+.background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('images/bg2.jpg') no-repeat center center / cover;
+  z-index: -1;
+}
+
+.title {
+  text-align: center;
+  font-size: 48px;
+  margin: 40px 0;
+  color: #ff6b6b;
+  text-shadow: 0 0 10px #ff6b6b;
+}
+
+.timeline {
+  width: 90%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.story {
+  display: flex;
+  align-items: center;
+  margin: 50px 0;
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.story.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story:nth-child(even) {
+  flex-direction: row-reverse;
+}
+
+.story-img {
+  position: relative;
+  width: 45%;
+  cursor: pointer;
+}
+
+.story-img img {
+  width: 100%;
+  border-radius: 20px;
+  display: block;
+}
+
+.story-img canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.story-text {
+  width: 50%;
+  padding: 20px;
+  background: rgba(30,30,50,0.6);
+  border-radius: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  position: relative;
+
+  font-size: 26px;   /* 改这里 */
+  color: #fff;       /* 如果背景深色，字体用白色更清晰 */
+}
+
+
+.story-text .date {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 22px;
+  color: #ffcc66;
+}
+/* 故事页（信纸背景可自换） */
+.story-page {
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Serif SC', serif;
+  min-height: 100vh;
+  background: #fdf6e3 url("images/letter-bg.jpg") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ------- 信封组件（修正图层顺序） ------- */
+.envelope {
+  position: relative;
+  width: 660px;
+  height: 440px;
+  margin: 80px auto;
+  perspective: 1200px;
+  cursor: pointer;
+}
+
+/* 信封底座（口袋） */
+.envelope .pocket {
+  position: absolute;
+  inset: 0;
+  background: #f1c27d;                 /* 浅棕色 */
+  border: 2px solid #c89b6d;
+  border-radius: 8px;
+  z-index: 1;                           /* 最底层 */
+}
+
+/* 信纸内容（初始隐藏，打开后出现并提层） */
+.envelope .letter {
+  position: absolute;
+  inset: 12px;
+  background: rgba(255,255,255,0.96);
+  border-radius: 8px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.08);
+  padding: 24px;
+  overflow: auto;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .6s ease .6s, transform .6s ease .6s, z-index 0s linear .6s;
+}
+
+/* 信封正面（盖住信纸，打开后淡出并禁用交互） */
+.envelope .front {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#f3c98b, #e9b97a);
+  border: 2px solid #c89b6d;
+  border-radius: 8px;
+  z-index: 3;
+  transition: opacity .6s ease .4s, transform .6s ease .4s;
+}
+
+/* 信封盖（上半三角形，上翻动画） */
+.envelope .flap {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 52%;
+  background: #e0b478;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top;
+  z-index: 4;
+  transition: transform 1s ease;
+  backface-visibility: hidden;
+}
+
+/* 打开：盖子上翻、正面淡出、信纸显现并置顶 */
+.envelope.open .flap {
+  transform: rotateX(-175deg);
+}
+
+.envelope.open .front {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.envelope.open .letter {
+  opacity: 1;
+  transform: translateY(0);
+  z-index: 5; /* 提到最上层，确保不会被挡 */
+}
+
+/* ---- 信件内部内容（延续之前的样式） ---- */
+.letter-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.letter-photo img {
+  width: 220px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.letter-text h2 {
+  font-family: 'Zhi Mang Xing', cursive;
+  font-size: 36px;
+  color: #b22222;  /* 酒红色 */
+  margin-bottom: 15px;
+}
+
+.letter-text p {
+  font-family: 'Ma Shan Zheng', cursive; /* 如果想全中文手写，可换成 Zhi Mang Xing */
+  font-size: 23px;
+  line-height: 1.8;
+  color: #333;
+}
+
+.letter-text .date {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 16px;
+  color: #888;
+  text-align: right;
+  margin-top: 18px;
+}
+
+/* 返回链接 */
+.back-link {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+}
+.back-link a {
+  text-decoration: none;
+  font-size: 18px;
+  color: #b22222;
+  background: rgba(255,255,255,0.85);
+  padding: 8px 14px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: .25s;
+}
+.back-link a:hover { background: #b22222; color: #fff; }
