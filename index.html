@@ -2,194 +2,114 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>ERROR</title>
+<title>我们的见面倒计时</title>
+<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    margin: 0;
-    overflow: hidden;
-    background: black;
-    cursor: pointer;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #fbd3e9, #bb377d);
+    font-family: 'Zhi Mang Xing', cursive;
+    color: #fff;
+    text-align: center;
   }
-  canvas {
+
+  h1 {
+    font-size: 40px;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+  }
+
+  .countdown {
+    display: flex;
+    gap: 20px;
+    font-size: 32px;
+    margin-bottom: 40px;
+  }
+
+  .countdown div {
+    background: rgba(255,255,255,0.2);
+    padding: 20px 15px;
+    border-radius: 15px;
+    min-width: 80px;
+  }
+
+  .countdown span {
     display: block;
+    font-size: 20px;
+    margin-top: 5px;
+  }
+
+  .enter-btn {
+    background: #b22222;
+    color: #fff;
+    font-family: 'Zhi Mang Xing', cursive;
+    font-size: 22px;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+
+  .enter-btn:hover {
+    background: #ff6f91;
+    transform: translateY(-3px);
+  }
+
+  @media (max-width: 500px) {
+    h1 { font-size: 28px; margin-bottom: 20px; }
+    .countdown { flex-direction: column; gap: 15px; }
+    .countdown div { min-width: auto; padding: 15px 10px; font-size: 24px; }
+    .countdown span { font-size: 16px; }
+    .enter-btn { font-size: 18px; padding: 10px 20px; }
   }
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
+  <h1>距离我们见面还有</h1>
+  <div class="countdown">
+    <div id="days">0<span>天</span></div>
+    <div id="hours">0<span>小时</span></div>
+    <div id="minutes">0<span>分钟</span></div>
+    <div id="seconds">0<span>秒</span></div>
+  </div>
+
+  <!-- 进入故事册按钮 -->
+  <a href="story.html" class="enter-btn">进入故事册 ❤️</a>
+
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+  const targetDate = new Date('2025-10-05T21:00:00'); // 目标时间
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resize();
-window.addEventListener('resize', resize);
+  function updateCountdown() {
+    const now = new Date();
+    const diff = targetDate - now;
 
-// 粒子类
-class Particle {
-  constructor(x, y, color, char) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.char = char;
-    this.size = Math.random() * 14 + 12;
-    this.speed = Math.random() * 1.5 + 0.5;
-  }
-  draw() {
-    ctx.fillStyle = this.color;
-    ctx.font = `${this.size}px Arial`;
-    ctx.fillText(this.char, this.x, this.y);
-  }
-  update() {
-    this.y += this.speed;
-    if (this.y > canvas.height) this.y = 0;
-    this.draw();
-  }
-}
-
-// 数字粒子
-function randomDigit() {
-  return Math.floor(Math.random() * 10);
-}
-
-// 创建数字粒子铺满屏幕
-let numberParticles = [];
-function createNumberParticles() {
-  numberParticles = [];
-  const cols = Math.floor(canvas.width / 20);
-  const rows = Math.floor(canvas.height / 20);
-  for(let i = 0; i < cols; i++){
-    for(let j = 0; j < rows; j++){
-      const x = i * 20 + Math.random()*10;
-      const y = j * 20 + Math.random()*10;
-      const color = Math.random() > 0.5 ? '#00ffff' : '#00ff00';
-      const char = randomDigit();
-      numberParticles.push(new Particle(x, y, color, char));
+    if (diff <= 0) {
+      document.querySelector('.countdown').innerHTML = '<div>终于见面啦！❤️</div>';
+      clearInterval(timer);
+      return;
     }
-  }
-}
 
-// 中文粒子
-let chineseParticles = [];
+    const days = Math.floor(diff / (1000*60*60*24));
+    const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+    const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+    const seconds = Math.floor((diff % (1000*60)) / 1000);
 
-function createTextParticles(text, color, fontSize, offsetY=0) {
-  const tempCanvas = document.createElement('canvas');
-  const tctx = tempCanvas.getContext('2d');
-  tempCanvas.width = canvas.width;
-  tempCanvas.height = canvas.height;
-  tctx.fillStyle = 'white';
-  tctx.font = `${fontSize}px Arial`;
-  const textWidth = tctx.measureText(text).width;
-  const x = (tempCanvas.width - textWidth) / 2;
-  const y = tempCanvas.height / 2 + offsetY;
-  tctx.fillText(text, x, y);
-
-  const imageData = tctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-  const data = imageData.data;
-
-  for(let i=0; i<tempCanvas.width; i+=2){
-    for(let j=0; j<tempCanvas.height; j+=2){
-      const index = (j * tempCanvas.width + i) * 4;
-      if(data[index+3] > 128){
-        chineseParticles.push({x:i, y:j, color});
-      }
-    }
-  }
-}
-
-// 背景烟花粒子
-class FireworkParticle {
-  constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 10 + 5;
-    this.vx = Math.cos(angle) * speed;
-    this.vy = Math.sin(angle) * speed;
-    this.size = Math.random() * 4 + 2;
-    this.alpha = 1;
-    this.color = color;
-    this.gravity = 0.3;
-    this.friction = 0.95;
-  }
-  update() {
-    this.vx *= this.friction;
-    this.vy *= this.friction;
-    this.vy += this.gravity;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.alpha -= 0.02;
-    this.draw();
-  }
-  draw() {
-    ctx.globalAlpha = Math.max(this.alpha,0);
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-}
-
-let fireworks = [];
-let exploding = false;
-
-function explode() {
-  numberParticles.forEach(p => {
-    const color = `hsl(${Math.random()*360},100%,50%)`;
-    fireworks.push(new FireworkParticle(p.x, p.y, color));
-  });
-  exploding = true;
-}
-
-// 动画循环
-function animate() {
-  ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  if(!exploding){
-    numberParticles.forEach(p => p.update());
-    chineseParticles.forEach(p => {
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, 4, 4);
-    });
-  } else {
-    fireworks.forEach((f, idx) => {
-      f.update();
-      if(f.alpha <= 0) fireworks.splice(idx,1);
-    });
-    if(fireworks.length === 0){
-      window.location.href = 'story.html'; // 动画结束跳转story1
-    }
+    document.getElementById('days').firstChild.textContent = days;
+    document.getElementById('hours').firstChild.textContent = hours;
+    document.getElementById('minutes').firstChild.textContent = minutes;
+    document.getElementById('seconds').firstChild.textContent = seconds;
   }
 
-  requestAnimationFrame(animate);
-}
-
-// 初始化
-createNumberParticles();
-animate();
-
-// 显示中文粒子并短暂停留
-setTimeout(() => {
-  createTextParticles('轩轩', '#ffa500', 200, -140);
-  setTimeout(() => {
-    createTextParticles('七夕快乐 ❤️', '#ff0000', 150, 80); // 字体大一半
-    setTimeout(() => {
-      chineseParticles = [];
-    }, 2000);
-  }, 1000);
-}, 2000);
-
-// 点击触发背景烟花爆炸
-canvas.addEventListener('click', () => {
-  if(!exploding){
-    explode();
-  }
-});
+  updateCountdown();
+  const timer = setInterval(updateCountdown, 1000);
 </script>
 </body>
 </html>
