@@ -2,7 +2,8 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>我们的见面倒计时</title>
+<meta charset="UTF-8">
+<title>轩轩生日倒计时</title>
 <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,7 +13,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #fbd3e9, #bb377d);
+    background: linear-gradient(135deg, #ffecd2, #fcb69f); /* 温暖橙粉渐变 */
     font-family: 'Zhi Mang Xing', cursive;
     color: #fff;
     text-align: center;
@@ -21,7 +22,7 @@
   h1 {
     font-size: 40px;
     margin-bottom: 30px;
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
   }
 
   .countdown {
@@ -45,7 +46,7 @@
   }
 
   .enter-btn {
-    background: #b22222;
+    background: #ff6f91;
     color: #fff;
     font-family: 'Zhi Mang Xing', cursive;
     font-size: 22px;
@@ -59,7 +60,7 @@
   }
 
   .enter-btn:hover {
-    background: #ff6f91;
+    background: #ff3d7f;
     transform: translateY(-3px);
   }
 
@@ -73,7 +74,7 @@
 </style>
 </head>
 <body>
-  <h1>距离我们见面还有</h1>
+  <h1>距离轩轩生日还有</h1>
   <div class="countdown">
     <div id="days">0<span>天</span></div>
     <div id="hours">0<span>小时</span></div>
@@ -85,14 +86,14 @@
   <a href="story.html" class="enter-btn">进入故事册 ❤️</a>
 
 <script>
-  const targetDate = new Date('2025-10-04T17:00:00'); // 目标时间
+  const targetDate = new Date('2025-11-14T00:00:00'); // 轩轩生日
 
   function updateCountdown() {
     const now = new Date();
     const diff = targetDate - now;
 
     if (diff <= 0) {
-      document.querySelector('.countdown').innerHTML = '<div>终于见面啦！❤️</div>';
+      document.querySelector('.countdown').innerHTML = '<div>生日快乐！🎉🎂❤️</div>';
       clearInterval(timer);
       return;
     }
@@ -113,5 +114,3 @@
 </script>
 </body>
 </html>
-
-
