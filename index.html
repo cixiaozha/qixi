@@ -1,116 +1,484 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8">
-<meta charset="UTF-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>轩轩生日倒计时</title>
-<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #ffecd2, #fcb69f); /* 温暖橙粉渐变 */
-    font-family: 'Zhi Mang Xing', cursive;
-    color: #fff;
-    text-align: center;
+  :root{
+    --bg1:#0b1220; /* deep night */
+    --accent:#33d1ff;
+    --accent2:#7affc2;
+    --glass: rgba(255,255,255,0.06);
+    --card: rgba(255,255,255,0.04);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  body{
+    background: radial-gradient(1200px 600px at 10% 20%, rgba(15,30,60,0.35), transparent),
+                linear-gradient(180deg,var(--bg1) 0%, #07101a 100%);
+    color:#cfeeff;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
   }
 
-  h1 {
-    font-size: 40px;
-    margin-bottom: 30px;
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+  /* canvas full-screen for particles and effects */
+  #fxCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+  .ui{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width:980px;
+    text-align:center;
+    padding:28px;
+    border-radius:16px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 10px 40px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+    backdrop-filter: blur(6px) saturate(120%);
   }
 
-  .countdown {
-    display: flex;
-    gap: 20px;
-    font-size: 32px;
-    margin-bottom: 40px;
+  h1{
+    margin:0 0 14px 0;
+    font-weight:600;
+    letter-spacing:1px;
+    font-size:28px;
+    color:#dff9ff;
+    text-shadow: 0 6px 22px rgba(51,209,255,0.06);
+  }
+  p.lead{
+    margin:0 0 20px 0;
+    color:#96f0ff;
+    opacity:0.9;
+    font-size:14px;
   }
 
-  .countdown div {
-    background: rgba(255,255,255,0.2);
-    padding: 20px 15px;
-    border-radius: 15px;
-    min-width: 80px;
+  .countdown{
+    display:flex;
+    gap:14px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .cell{
+    min-width:86px;
+    padding:16px 10px;
+    border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    color:#e6fbff;
+  }
+  .num{
+    font-size:34px;
+    font-weight:700;
+    letter-spacing:1px;
+    color:#fff;
+    text-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  }
+  .label{font-size:12px;color:rgba(255,255,255,0.65);margin-top:6px}
+
+  .enter-btn{
+    display:inline-block;
+    margin-top:16px;
+    padding:12px 24px;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#07101a;
+    font-weight:700;
+    text-decoration:none;
+    box-shadow: 0 8px 30px rgba(51,209,255,0.12), 0 2px 6px rgba(0,0,0,0.4);
+    transform:translateY(0);
+    transition:transform .22s ease, box-shadow .22s;
+    display:none; /* show only on celebration */
+  }
+  .enter-btn:hover{transform:translateY(-4px);box-shadow: 0 18px 45px rgba(51,209,255,0.16)}
+
+  /* Celebration central message */
+  .celebration-msg{
+    position: absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%) scale(.9);
+    z-index:3;
+    pointer-events:none;
+    color:#fff;
+    text-align:center;
+    opacity:0;
+  }
+  .celebration-msg.show{
+    opacity:1; pointer-events:auto;
+    animation: popIn .9s cubic-bezier(.2,.9,.3,1);
+  }
+  .celebration-msg h2{
+    font-size:46px; margin:0 0 12px 0;
+    letter-spacing:1px;
+    text-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 30px rgba(122,255,194,0.08);
+  }
+  .celebration-msg p{margin:0;color:rgba(255,255,255,0.9);font-size:18px}
+
+  @keyframes popIn {
+    0%{transform:translate(-50%,-50%) scale(.6);opacity:0}
+    60%{transform:translate(-50%,-50%) scale(1.06);opacity:1}
+    100%{transform:translate(-50%,-50%) scale(1)}
   }
 
-  .countdown span {
-    display: block;
-    font-size: 20px;
-    margin-top: 5px;
-  }
-
-  .enter-btn {
-    background: #ff6f91;
-    color: #fff;
-    font-family: 'Zhi Mang Xing', cursive;
-    font-size: 22px;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    text-decoration: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-  }
-
-  .enter-btn:hover {
-    background: #ff3d7f;
-    transform: translateY(-3px);
-  }
-
-  @media (max-width: 500px) {
-    h1 { font-size: 28px; margin-bottom: 20px; }
-    .countdown { flex-direction: column; gap: 15px; }
-    .countdown div { min-width: auto; padding: 15px 10px; font-size: 24px; }
-    .countdown span { font-size: 16px; }
-    .enter-btn { font-size: 18px; padding: 10px 20px; }
+  /* responsive */
+  @media (max-width:560px){
+    .num{font-size:28px}
+    .cell{min-width:72px;padding:12px 8px}
+    h1{font-size:20px}
+    .celebration-msg h2{font-size:32px}
   }
 </style>
 </head>
 <body>
-  <h1>距离轩轩生日还有</h1>
-  <div class="countdown">
-    <div id="days">0<span>天</span></div>
-    <div id="hours">0<span>小时</span></div>
-    <div id="minutes">0<span>分钟</span></div>
-    <div id="seconds">0<span>秒</span></div>
+  <!-- canvas for fx -->
+  <canvas id="fxCanvas"></canvas>
+
+  <div class="ui" id="ui">
+    <h1>距离轩轩生日还有</h1>
+    <p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
+
+    <div class="countdown" id="countdown">
+      <div class="cell"><div class="num" id="days">0</div><div class="label">天</div></div>
+      <div class="cell"><div class="num" id="hours">0</div><div class="label">小时</div></div>
+      <div class="cell"><div class="num" id="minutes">0</div><div class="label">分钟</div></div>
+      <div class="cell"><div class="num" id="seconds">0</div><div class="label">秒</div></div>
+    </div>
+
+    <a class="enter-btn" id="enterBtn" href="story.html">进入我们的故事册</a>
   </div>
 
-  <!-- 进入故事册按钮 -->
-  <a href="story.html" class="enter-btn">进入故事册 ❤️</a>
+  <div class="celebration-msg" id="celebrationMsg" aria-hidden="true">
+    <h2 id="mainText">🎂 轩轩生日快乐</h2>
+    <p id="subText">冰宝一直都在你身边 💙</p>
+  </div>
 
 <script>
-  const targetDate = new Date('2025-11-14T00:00:00'); // 轩轩生日
+/*
+  Cool techy birthday countdown + celebration.
+  - targetDate: 2025-11-14 00:00:00 local time
+  - If now >= targetDate => show celebration immediately
+  - Celebration: flash, particle field (neon), heart shape particles form,
+    balloon-like orbs rise, synth melody via WebAudio, show enter button.
+*/
 
-  function updateCountdown() {
-    const now = new Date();
-    const diff = targetDate - now;
+// ---- Config ----
+const TARGET = new Date('2025-11-14T00:00:00'); // local
+const CANVAS = document.getElementById('fxCanvas');
+const ctx = CANVAS.getContext('2d', { alpha: true });
+let W = CANVAS.width = innerWidth;
+let H = CANVAS.height = innerHeight;
 
-    if (diff <= 0) {
-      document.querySelector('.countdown').innerHTML = '<div>生日快乐！🎉🎂❤️</div>';
-      clearInterval(timer);
-      return;
-    }
+// UI refs
+const daysEl = document.getElementById('days');
+const hoursEl = document.getElementById('hours');
+const minutesEl = document.getElementById('minutes');
+const secondsEl = document.getElementById('seconds');
+const enterBtn = document.getElementById('enterBtn');
+const celebrationMsg = document.getElementById('celebrationMsg');
+const mainText = document.getElementById('mainText');
+const subText = document.getElementById('subText');
 
-    const days = Math.floor(diff / (1000*60*60*24));
-    const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-    const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-    const seconds = Math.floor((diff % (1000*60)) / 1000);
+// resize
+addEventListener('resize', ()=>{ W = CANVAS.width = innerWidth; H = CANVAS.height = innerHeight; });
 
-    document.getElementById('days').firstChild.textContent = days;
-    document.getElementById('hours').firstChild.textContent = hours;
-    document.getElementById('minutes').firstChild.textContent = minutes;
-    document.getElementById('seconds').firstChild.textContent = seconds;
+// ---- Helper ----
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+// ---- Countdown logic ----
+let countdownTimer = null;
+function updateCountdown(){
+  const now = new Date();
+  let diff = TARGET - now;
+  if(diff <= 0){
+    // trigger celebration
+    clearInterval(countdownTimer);
+    showCelebration();
+    return;
+  }
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const seconds = Math.floor((diff % (1000*60)) / 1000);
+  daysEl.textContent = days;
+  hoursEl.textContent = pad(hours);
+  minutesEl.textContent = pad(minutes);
+  secondsEl.textContent = pad(seconds);
+}
+updateCountdown();
+countdownTimer = setInterval(updateCountdown, 1000);
+
+// If already past target on load -> immediate celebration
+if(new Date() >= TARGET){
+  clearInterval(countdownTimer);
+  // small delay to ensure UI renders
+  setTimeout(showCelebration, 300);
+}
+
+// ---- Particle system ----
+let particles = [];
+let hearts = [];
+let celebrationActive = false;
+let audioCtx = null;
+
+// Neon particle class
+class P {
+  constructor(x,y,dx,dy,size,color,life){
+    this.x=x; this.y=y; this.vx=dx; this.vy=dy; this.r=size; this.c=color; this.life=life||1;
+    this.alpha = 1;
+  }
+  update(dt){
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.vy *= 0.999;
+    this.alpha -= 0.008*dt;
+    this.life -= 0.008*dt;
+  }
+  draw(g){
+    g.save();
+    g.globalAlpha = Math.max(this.alpha,0);
+    const g1 = g.createLinearGradient(this.x-this.r,this.y-this.r,this.x+this.r,this.y+this.r);
+    g1.addColorStop(0,this.c);
+    g1.addColorStop(1, 'rgba(255,255,255,0.07)');
+    g.fillStyle = g1;
+    g.beginPath();
+    g.arc(this.x,this.y,this.r,0,Math.PI*2);
+    g.fill();
+    g.restore();
+  }
+}
+
+// heart-points generator (parametric heart)
+function heartPoint(t, scale=1, cx=W/2, cy=H/2){
+  // param eq: x = 16 sin^3 t, y = 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t
+  const x = 16*Math.pow(Math.sin(t),3);
+  const y = 13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t);
+  return {x: cx + x*scale, y: cy - y*scale};
+}
+
+// particle emitters
+function spawnNeonBurst(x,y,count,spread=1){
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = 60 + Math.random()*220;
+    const dx = Math.cos(angle)*speed;
+    const dy = Math.sin(angle)*speed;
+    const size = 2 + Math.random()*5;
+    const hue = 180 + Math.random()*120;
+    const color = `hsl(${hue},90%,60%)`;
+    particles.push(new P(x,y,dx,dy,size,color,1));
+  }
+}
+function spawnRisingOrbs(count){
+  for(let i=0;i<count;i++){
+    const x = Math.random()*W;
+    const y = H + Math.random()*80;
+    const dx = (Math.random()-0.5)*20;
+    const dy = - (60 + Math.random()*140);
+    const size = 6 + Math.random()*12;
+    const hue = 180 + Math.random()*120;
+    const color = `hsl(${hue},80%,60%)`;
+    particles.push(new P(x,y,dx,dy,size,color,1.5));
+  }
+}
+
+// form heart from particles over time
+function spawnHeartParticles(total=160){
+  const scale = Math.min(W,H)/60;
+  for(let i=0;i<total;i++){
+    const t = (i/total)*Math.PI*2;
+    const p = heartPoint(t, scale, W/2, H/2 - Math.min(H,400)/8);
+    const dx = (Math.random()-0.5)*20;
+    const dy = (Math.random()-0.5)*20;
+    const hue = 320 + Math.random()*40;
+    const color = `hsl(${hue},90%,65%)`;
+    const sp = new P(p.x + (Math.random()-0.5)*6, p.y + (Math.random()-0.5)*6, dx, dy, 3+Math.random()*3, color, 2.2);
+    hearts.push(sp);
+  }
+}
+
+// draw loop
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(1.5, (now - last)/16.6667);
+  last = now;
+  // fade background slightly (to create trails)
+  ctx.clearRect(0,0,W,H);
+
+  // subtle background moving lines (data stream)
+  drawBackgroundStreams(now);
+
+  // update/draw particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.update(dt);
+    p.draw(ctx);
+    if(p.life<=0 || p.alpha<=0) particles.splice(i,1);
+  }
+  for(let i=hearts.length-1;i>=0;i--){
+    const p=hearts[i];
+    p.update(dt*0.6);
+    p.draw(ctx);
+    if(p.life<=0 || p.alpha<=0) hearts.splice(i,1);
   }
 
-  updateCountdown();
-  const timer = setInterval(updateCountdown, 1000);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// dynamic background streams
+function drawBackgroundStreams(now){
+  const count = Math.max(4, Math.floor(W/140));
+  for(let i=0;i<count;i++){
+    const x = (i+0.5)/count * W + Math.sin(now/1000 + i)*60;
+    const shift = Math.sin(now/800 + i)*40;
+    const grad = ctx.createLinearGradient(x-100,0,x+100,H);
+    grad.addColorStop(0, 'rgba(80,120,160,0.02)');
+    grad.addColorStop(0.5, 'rgba(130,180,220,0.03)');
+    grad.addColorStop(1, 'rgba(80,120,160,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x-260,0,520,H);
+    // little moving highlight
+    ctx.beginPath();
+    ctx.moveTo(x-40,0);
+    ctx.lineTo(x+40,0);
+    ctx.lineTo(x+40,H);
+    ctx.lineTo(x-40,H);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.0025)';
+    ctx.fill();
+  }
+}
+
+// ---- Celebration sequence ----
+async function showCelebration(){
+  if(celebrationActive) return;
+  celebrationActive = true;
+
+  // tiny flash (white overlay)
+  await flashScreen();
+
+  // spawn initial neon burst at center
+  spawnNeonBurst(W/2, H/2, 220);
+
+  // play melody
+  startMelody();
+
+  // after brief delay spawn heart form
+  setTimeout(()=> spawnHeartParticles(240), 600);
+
+  // continuous rising orbs & confetti-like
+  const orbInterval = setInterval(()=> spawnRisingOrbs(12), 400);
+  const burstInterval = setInterval(()=> spawnNeonBurst(Math.random()*W, Math.random()*H*0.6, 60 + Math.floor(Math.random()*140)), 900);
+
+  // show central message + enter button after a bit
+  setTimeout(()=>{
+    celebrationMsg.classList.add('show');
+    enterBtn.style.display='inline-block';
+  },900);
+
+  // gradually reduce intervals after some time
+  setTimeout(()=>{
+    clearInterval(burstInterval);
+  }, 9000);
+  setTimeout(()=>{
+    clearInterval(orbInterval);
+  }, 18000);
+}
+
+// flash screen once (returns Promise)
+function flashScreen(){
+  return new Promise(resolve=>{
+    const overlay = document.createElement('div');
+    overlay.style.position='fixed';
+    overlay.style.inset='0';
+    overlay.style.zIndex=999;
+    overlay.style.background='white';
+    overlay.style.opacity='0';
+    overlay.style.pointerEvents='none';
+    overlay.style.transition='opacity .12s ease';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(()=> overlay.style.opacity='1');
+    setTimeout(()=> overlay.style.opacity='0', 120);
+    setTimeout(()=> { document.body.removeChild(overlay); resolve(); }, 300);
+  });
+}
+
+// ---- WebAudio synth melody (light electronic Happy Birthday-ish) ----
+function startMelody(){
+  try{
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctxA = audioCtx;
+
+    const master = ctxA.createGain();
+    master.gain.value = 0.08;
+    master.connect(ctxA.destination);
+
+    // simple plucky synth via triangle + noise
+    function playNote(time, freq, dur){
+      const osc = ctxA.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+
+      const env = ctxA.createGain();
+      env.gain.setValueAtTime(0.0001, time);
+      env.gain.exponentialRampToValueAtTime(1.0, time + 0.01);
+      env.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+      const filt = ctxA.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.value = Math.min(1200, 800 + Math.random()*600);
+
+      osc.connect(filt);
+      filt.connect(env);
+      env.connect(master);
+
+      osc.start(time);
+      osc.stop(time + dur + 0.02);
+    }
+
+    const now = ctxA.currentTime + 0.05;
+    // melody: simple motif approximating "Happy Birthday" intervals (in Hz)
+    const base = 440 * Math.pow(2, (60-69)/12); // MIDI 60 ~ C4 approx
+    const seq = [0,2,4,0,7,6, 0,2,4,0,9,7, 0,12,10,7,5,4, 11,11,9,7,9,7];
+    let t = now;
+    for(let i=0;i<seq.length;i++){
+      const freq = base * Math.pow(2, seq[i]/12);
+      playNote(t, freq, 0.22);
+      t += 0.26;
+    }
+    // slight bass hits
+    for(let i=0;i<3;i++){
+      const osc2 = ctxA.createOscillator();
+      const g2 = ctxA.createGain();
+      osc2.type='sine';
+      osc2.frequency.value = 55 + i*8;
+      g2.gain.setValueAtTime(0.02, ctxA.currentTime + 0.2 + i*0.3);
+      g2.gain.exponentialRampToValueAtTime(0.0001, ctxA.currentTime + 1.8 + i*0.3);
+      osc2.connect(g2); g2.connect(master);
+      osc2.start(ctxA.currentTime + 0.2 + i*0.3);
+      osc2.stop(ctxA.currentTime + 2.2 + i*0.3);
+    }
+  }catch(e){ console.warn('Audio error', e); }
+}
+
+// ---- Optional: click to trigger celebration if user wants early preview ----
+document.body.addEventListener('dblclick', ()=>{
+  // dblclick to preview
+  if(!celebrationActive) showCelebration();
+});
+
+// Accessibility: enter button go
+enterBtn.addEventListener('click', ()=> {
+  // user navigation to story.html
+});
+
+// End of script
 </script>
 </body>
 </html>
