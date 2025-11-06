@@ -2,148 +2,138 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>轩轩生日倒计时</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap');
-
 body {
   margin: 0;
-  background: radial-gradient(circle at center, #0d1b2a, #000);
-  color: #00eaff;
-  font-family: 'Orbitron', sans-serif;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 50% 30%, #0a0a0f, #000);
+  color: #00f2ff;
+  font-family: 'Orbitron', sans-serif;
   overflow: hidden;
 }
 
 h1 {
-  font-size: 2.3em;
+  font-size: 2.5em;
   letter-spacing: 2px;
   margin-bottom: 20px;
-  text-shadow: 0 0 15px #00eaff;
+  color: #00f2ff;
+  text-shadow: 0 0 20px #00f2ff;
 }
 
 #countdown {
   font-size: 2em;
-  text-shadow: 0 0 20px #00eaff;
+  text-align: center;
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px #00f2ff;
 }
 
 button {
-  margin-top: 60px;
-  padding: 12px 36px;
-  border: 2px solid #00eaff;
-  background: transparent;
-  color: #00eaff;
-  font-size: 1.1em;
+  padding: 12px 28px;
+  font-size: 1em;
+  background: rgba(0,255,255,0.1);
+  border: 1px solid #00ffff;
   border-radius: 8px;
+  color: #00f2ff;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: 0.3s;
 }
 button:hover {
-  background: #00eaff;
+  background: #00ffff;
   color: #000;
 }
 
-canvas {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+/* 粒子动画 */
+@keyframes glow {
+  from { opacity: 0.1; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.1); }
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #00ffff;
+  border-radius: 50%;
+  animation: glow 2s infinite alternate;
+}
+
+/* Birthday效果 */
+#celebration {
   display: none;
+  text-align: center;
+  font-size: 2.8em;
+  color: #00ffff;
+  text-shadow: 0 0 25px #00ffff, 0 0 50px #00ffff;
+  animation: flicker 2s infinite alternate;
+}
+@keyframes flicker {
+  from { opacity: 0.8; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1.02); }
 }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<h1>距离轩轩的生日还有</h1>
-<div id="countdown"></div>
-<canvas id="fireworks"></canvas>
-<button onclick="location.href='story.html'">进入我们的故事册 📖</button>
+<h1>距离轩轩生日还有</h1>
+<div id="countdown">加载中...</div>
+<button onclick="window.location.href='story.html'">进入故事册</button>
+
+<div id="celebration">🎉 Happy Birthday 轩轩 🎂</div>
 
 <script>
+// 目标日期
+const targetDate = new Date("2025-11-14T00:00:00");
+
+// 倒计时更新
 const countdownEl = document.getElementById('countdown');
-const canvas = document.getElementById('fireworks');
-const ctx = canvas.getContext('2d');
-const targetDate = new Date('2025-11-14T00:00:00');
+const celebration = document.getElementById('celebration');
 
 function updateCountdown() {
-  const now = new Date(); // ✅ 设备时间
+  const now = new Date(); // ✅ 使用设备时间
   const diff = targetDate - now;
 
   if (diff <= 0) {
-    countdownEl.textContent = "🎉 生日快乐，轩轩！🎂";
-    startFireworks();
+    countdownEl.style.display = 'none';
+    celebration.style.display = 'block';
+    spawnParticles();
     clearInterval(timer);
-    return;
+  } else {
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const m = Math.floor((diff / (1000 * 60)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+    countdownEl.innerHTML = `${d} 天 ${h} 时 ${m} 分 ${s} 秒`;
   }
-
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-  countdownEl.textContent = `${d} 天 ${h} 小时 ${m} 分钟 ${s} 秒`;
 }
 
 const timer = setInterval(updateCountdown, 1000);
 updateCountdown();
 
-function startFireworks() {
-  canvas.style.display = 'block';
-  resize();
-  const colors = ['#00eaff', '#4ef5ff', '#00ffd5', '#b3fff5'];
-  let particles = [];
-
-  function createParticle(x, y) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 5 + 2;
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 100 + Math.random() * 50,
-      color: colors[Math.floor(Math.random() * colors.length)]
-    });
+// 粒子爆发效果
+function spawnParticles() {
+  for (let i = 0; i < 150; i++) {
+    const p = document.createElement('div');
+    p.classList.add('particle');
+    document.body.appendChild(p);
+    const x = Math.random() * window.innerWidth;
+    const y = Math.random() * window.innerHeight;
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+    const duration = 1 + Math.random() * 2;
+    const delay = Math.random() * 2;
+    p.style.animationDuration = `${duration}s`;
+    p.style.animationDelay = `${delay}s`;
+    p.style.opacity = Math.random();
+    setTimeout(() => p.remove(), 4000);
   }
-
-  function draw() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach((p, i) => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.05;
-      p.life--;
-      if (p.life <= 0) particles.splice(i, 1);
-    });
-
-    if (Math.random() < 0.04) {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height * 0.5;
-      for (let i = 0; i < 60; i++) createParticle(x, y);
-    }
-
-    requestAnimationFrame(draw);
-  }
-
-  draw();
 }
-
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
 </script>
 </body>
 </html>
