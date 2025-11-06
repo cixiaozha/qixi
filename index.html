@@ -43,7 +43,8 @@
   .cell{min-width:86px;padding:16px 10px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);color:#e6fbff;}
   .num{font-size:34px;font-weight:700;letter-spacing:1px;color:#fff;text-shadow:0 6px 20px rgba(0,0,0,0.45);}
   .label{font-size:12px;color:rgba(255,255,255,0.65);margin-top:6px}
-  .enter-btn{display:inline-block;margin-top:16px;padding:12px 24px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07101a;font-weight:700;text-decoration:none;box-shadow:0 8px 30px rgba(51,209,255,0.12),0 2px 6px rgba(0,0,0,0.4);transform:translateY(0);transition:transform .22s ease,box-shadow .22s;display:none;}
+  /* 修改：默认让按钮可见（倒计时界面也能点） */
+  .enter-btn{display:inline-block;margin-top:16px;padding:12px 24px;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07101a;font-weight:700;text-decoration:none;box-shadow:0 8px 30px rgba(51,209,255,0.12),0 2px 6px rgba(0,0,0,0.4);transform:translateY(0);transition:transform .22s ease,box-shadow .22s;}
   .enter-btn:hover{transform:translateY(-4px);box-shadow:0 18px 45px rgba(51,209,255,0.16)}
   .celebration-msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:3;pointer-events:none;color:#fff;text-align:center;opacity:0;}
   .celebration-msg.show{opacity:1;pointer-events:auto;animation:popIn .9s cubic-bezier(.2,.9,.3,1);}
@@ -72,7 +73,7 @@
 
 <div class="celebration-msg" id="celebrationMsg" aria-hidden="true">
   <h2 id="mainText">🎂 轩轩生日快乐</h2>
-  <p id="subText">冰宝一直都在你身边 💙</p>
+  <p id="subText">冰冰一直都在你身边 💙</p>
 </div>
 
 <script>
@@ -114,9 +115,16 @@ function updateCountdown(){
 updateCountdown();
 countdownTimer = setInterval(updateCountdown, 1000);
 
+// if page loads at/after target -> celebrate immediately (and hide countdown)
 if(new Date() >= TARGET){
   clearInterval(countdownTimer);
-  setTimeout(showCelebration, 300);
+  // ensure UI rendered before showing celebration
+  setTimeout(()=> {
+    // hide countdown container immediately to avoid overlap
+    const cd = document.getElementById('countdown');
+    if(cd) cd.style.display = 'none';
+    showCelebration();
+  }, 300);
 }
 
 // Particle system (unchanged from your version)
@@ -133,9 +141,40 @@ function spawnHeartParticles(total=160){const scale=Math.min(W,H)/60;for(let i=0
 let last=performance.now();
 function loop(now){const dt=Math.min(1.5,(now-last)/16.6667);last=now;ctx.clearRect(0,0,W,H);drawBackgroundStreams(now);for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.update(dt);p.draw(ctx);if(p.life<=0||p.alpha<=0)particles.splice(i,1);}for(let i=hearts.length-1;i>=0;i--){const p=hearts[i];p.update(dt*0.6);p.draw(ctx);if(p.life<=0||p.alpha<=0)hearts.splice(i,1);}requestAnimationFrame(loop);}requestAnimationFrame(loop);
 function drawBackgroundStreams(now){const c=Math.max(4,Math.floor(W/140));for(let i=0;i<c;i++){const x=(i+0.5)/c*W+Math.sin(now/1000+i)*60;const grad=ctx.createLinearGradient(x-100,0,x+100,H);grad.addColorStop(0,'rgba(80,120,160,0.02)');grad.addColorStop(0.5,'rgba(130,180,220,0.03)');grad.addColorStop(1,'rgba(80,120,160,0.02)');ctx.fillStyle=grad;ctx.fillRect(x-260,0,520,H);ctx.beginPath();ctx.rect(x-40,0,80,H);ctx.fillStyle='rgba(255,255,255,0.0025)';ctx.fill();}}
-async function showCelebration(){if(celebrationActive)return;celebrationActive=true;await flashScreen();spawnNeonBurst(W/2,H/2,220);startMelody();setTimeout(()=>spawnHeartParticles(240),600);const orbInterval=setInterval(()=>spawnRisingOrbs(12),400);const burstInterval=setInterval(()=>spawnNeonBurst(Math.random()*W,Math.random()*H*0.6,60+Math.floor(Math.random()*140)),900);setTimeout(()=>{celebrationMsg.classList.add('show');enterBtn.style.display='inline-block';},900);setTimeout(()=>clearInterval(burstInterval),9000);setTimeout(()=>clearInterval(orbInterval),18000);}
+async function showCelebration(){if(celebrationActive)return;celebrationActive=true;
+
+// HIDE countdown container immediately to avoid overlap with celebration visuals
+const cd = document.getElementById('countdown');
+if(cd) cd.style.display = 'none';
+
+// tiny flash (white overlay)
+await flashScreen();
+
+// spawn initial neon burst at center
+spawnNeonBurst(W/2,H/2,220);
+
+// play melody
+startMelody();
+
+// after brief delay spawn heart form
+setTimeout(()=> spawnHeartParticles(240), 600);
+
+// continuous rising orbs & confetti-like
+const orbInterval = setInterval(()=> spawnRisingOrbs(12), 400);
+const burstInterval = setInterval(()=> spawnNeonBurst(Math.random()*W, Math.random()*H*0.6, 60 + Math.floor(Math.random()*140)), 900);
+
+// show central message + enter button after a bit
+setTimeout(()=>{
+  celebrationMsg.classList.add('show');
+  enterBtn.style.display='inline-block';
+},900);
+
+// gradually reduce intervals after some time
+setTimeout(()=>{clearInterval(burstInterval);}, 9000);
+setTimeout(()=>{clearInterval(orbInterval);}, 18000);
+}
 function flashScreen(){return new Promise(r=>{const o=document.createElement('div');o.style='position:fixed;inset:0;z-index:999;background:white;opacity:0;pointer-events:none;transition:opacity .12s ease';document.body.appendChild(o);requestAnimationFrame(()=>o.style.opacity='1');setTimeout(()=>o.style.opacity='0',120);setTimeout(()=>{o.remove();r();},300);});}
-function startMelody(){try{if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();}const ctxA=audioCtx,master=ctxA.createGain();master.gain.value=0.08;master.connect(ctxA.destination);function playNote(t,f,d){const o=ctxA.createOscillator();o.type='triangle';o.frequency.value=f;const e=ctxA.createGain();e.gain.setValueAtTime(0.0001,t);e.gain.exponentialRampToValueAtTime(1.0,t+0.01);e.gain.exponentialRampToValueAtTime(0.0001,t+d);const filt=ctxA.createBiquadFilter();filt.type='lowpass';filt.frequency.value=Math.min(1200,800+Math.random()*600);o.connect(filt);filt.connect(e);e.connect(master);o.start(t);o.stop(t+d+0.02);}const now=ctxA.currentTime+0.05;base=440*Math.pow(2,(60-69)/12);seq=[0,2,4,0,7,6,0,2,4,0,9,7,0,12,10,7,5,4,11,11,9,7,9,7];let t=now;for(let i=0;i<seq.length;i++){const f=base*Math.pow(2,seq[i]/12);playNote(t,f,0.22);t+=0.26;}for(let i=0;i<3;i++){const o2=ctxA.createOscillator();const g2=ctxA.createGain();o2.type='sine';o2.frequency.value=55+i*8;g2.gain.setValueAtTime(0.02,ctxA.currentTime+0.2+i*0.3);g2.gain.exponentialRampToValueAtTime(0.0001,ctxA.currentTime+1.8+i*0.3);o2.connect(g2);g2.connect(master);o2.start(ctxA.currentTime+0.2+i*0.3);o2.stop(ctxA.currentTime+2.2+i*0.3);}}catch(e){console.warn('Audio error',e);}}
+function startMelody(){try{if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();}const ctxA=audioCtx,master=ctxA.createGain();master.gain.value=0.08;master.connect(ctxA.destination);function playNote(t,f,d){const o=ctxA.createOscillator();o.type='triangle';o.frequency.value=f;const e=ctxA.createGain();e.gain.setValueAtTime(0.0001,t);e.gain.exponentialRampToValueAtTime(1.0,t+0.01);e.gain.exponentialRampToValueAtTime(0.0001,t+d);const filt=ctxA.createBiquadFilter();filt.type='lowpass';filt.frequency.value=Math.min(1200,800+Math.random()*600);o.connect(filt);filt.connect(e);e.connect(master);o.start(t);o.stop(t+d+0.02);}const now=ctxA.currentTime+0.05;base=440*Math.pow(2,(60-69)/12);seq=[0,2,4,0,7,6,0,2,4,0,9,7,0,12,10,7,5,4,11,11,9,7,9,7];let t=now;for(let i=0;i<seq.length;i++){const f=base*Math.pow(2,seq[i]/12);playNote(t,f,0.22);t+=0.26;}for(let i=0;i<3;i++){const o2=ctxA.createOscillator();const g2=ctxA.createGain();o2.type='sine';o2.frequency.value=55+i*8;g2.gain.setValueAtTime(0.02,ctxA.currentTime+0.2+i*0.3);g2.gain.exponentialRampToValueAtTime(0.0001,ctxA.currentTime+1.8+i*0.3);o2.connect(g2);g2.connect(master);o2.start(ctxA.currentTime+0.2+i*0.3);o2.stop(ctxA.currentTime+2.2+i*0.3);} }catch(e){console.warn('Audio error',e);} }
 </script>
 </body>
 </html>
