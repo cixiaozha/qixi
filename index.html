@@ -10,119 +10,96 @@
     --accent:#33d1ff;
     --accent2:#7affc2;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;}
   html,body{
     height:100%;margin:0;
-    font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    font-family:Inter,ui-sans-serif,system-ui;
+    overflow:hidden;
   }
   body{
     background: radial-gradient(1200px 600px at 10% 20%, rgba(15,30,60,0.35), transparent),
                 linear-gradient(180deg,var(--bg1) 0%, #07101a 100%);
     color:#cfeeff;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex;align-items:center;justify-content:center;
     padding:24px;
   }
-  #fxCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+  /* 倒计时部分 */
   .ui{
-    position:relative;
-    z-index:2;
-    width:100%;
-    max-width:980px;
+    position:relative;z-index:2;
     text-align:center;
     padding:28px;
     border-radius:16px;
-    background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-    box-shadow:0 10px 40px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
-    backdrop-filter:blur(6px) saturate(120%);
+    background:rgba(255,255,255,0.04);
+    backdrop-filter:blur(6px);
     transition:opacity 1s ease, transform 1s ease;
   }
-  .fade-out{
-    opacity:0;
-    transform:scale(0.96);
-    pointer-events:none;
-  }
-  h1{margin:0 0 14px 0;font-weight:600;letter-spacing:1px;font-size:28px;color:#dff9ff;}
-  p.lead{margin:0 0 20px 0;color:#96f0ff;opacity:0.9;font-size:14px;}
-  .countdown{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:22px;}
-  .cell{min-width:86px;padding:16px 10px;border-radius:12px;background:rgba(255,255,255,0.03);color:#e6fbff;}
-  .num{font-size:34px;font-weight:700;letter-spacing:1px;color:#fff;}
-  .label{font-size:12px;color:rgba(255,255,255,0.65);margin-top:6px}
+  .fade-out{opacity:0;transform:scale(0.95);pointer-events:none;}
+  h1{margin:0 0 14px;font-weight:600;font-size:28px;}
+  p.lead{margin:0 0 20px;color:#96f0ff;opacity:0.9;}
+  .countdown{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .cell{min-width:86px;padding:16px;border-radius:12px;background:rgba(255,255,255,0.03);}
+  .num{font-size:34px;font-weight:700;color:#fff;}
+  .label{font-size:12px;color:rgba(255,255,255,0.65);margin-top:6px;}
 
-  /* 固定右下角按钮 */
-  .enter-btn{
-    position:fixed;
-    bottom:24px;
-    right:24px;
-    display:inline-block;
-    padding:12px 24px;
-    border-radius:999px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    color:#07101a;
-    font-weight:700;
-    text-decoration:none;
-    box-shadow:0 8px 30px rgba(51,209,255,0.12),0 2px 6px rgba(0,0,0,0.4);
-    transform:translateY(0);
-    transition:transform .22s ease,box-shadow .22s;
-    animation:glow 3s ease-in-out infinite alternate;
-    z-index:100;
-  }
-  .enter-btn:hover{transform:translateY(-4px);}
-  @keyframes glow{
-    from{box-shadow:0 0 8px var(--accent);}
-    to{box-shadow:0 0 18px var(--accent2);}
-  }
-
+  /* 庆祝内容 */
   .celebration-msg{
-    position:fixed;
-    left:50%;
-    top:50%;
+    position:fixed;left:50%;top:50%;
     transform:translate(-50%,-50%) scale(.9);
-    z-index:3;
-    pointer-events:none;
-    color:#fff;
-    text-align:center;
-    opacity:0;
-    transition:opacity 1s ease, transform 0.6s ease;
+    color:#fff;text-align:center;
+    opacity:0;transition:all 1s ease;
+    z-index:5;pointer-events:none;
   }
   .celebration-msg.show{
-    opacity:1;
-    pointer-events:auto;
-    transform:translate(-50%,-50%) scale(1);
+    opacity:1;transform:translate(-50%,-50%) scale(1);
   }
-  .celebration-msg h2{font-size:46px;margin:0 0 12px 0;}
-  .celebration-msg p{margin:0;color:rgba(255,255,255,0.9);font-size:18px}
+  .celebration-msg h2{font-size:46px;margin:0 0 12px;}
+  .celebration-msg p{margin:0;font-size:18px;}
 
-  .popup-message{
+  /* 右下角按钮 */
+  .enter-btn{
+    position:fixed;bottom:24px;right:24px;
+    padding:12px 24px;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#07101a;font-weight:700;text-decoration:none;
+    box-shadow:0 8px 30px rgba(51,209,255,0.2);
+    z-index:10;
+    transition:transform .25s;
+  }
+  .enter-btn:hover{transform:translateY(-4px);}
+
+  /* 弹幕 */
+  .danmu{
     position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%) scale(0.8);
-    background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(6px);
-    padding:16px 24px;
-    border-radius:14px;
-    color:#fff;
+    white-space:nowrap;
     font-size:18px;
     font-weight:600;
-    box-shadow:0 0 20px rgba(51,209,255,0.3);
+    z-index:20;
     opacity:0;
-    transition:all 0.8s ease;
-    z-index:99;
+    pointer-events:none;
+    text-shadow:0 0 8px rgba(255,255,255,0.6);
+    transition:opacity 1s;
+  }
+  @keyframes floatLeft{
+    0%{transform:translateX(100vw);opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    100%{transform:translateX(-100vw);opacity:0;}
+  }
+  @keyframes floatRight{
+    0%{transform:translateX(-100vw);opacity:0;}
+    10%{opacity:1;}
+    90%{opacity:1;}
+    100%{transform:translateX(100vw);opacity:0;}
   }
 </style>
 </head>
 <body>
-<canvas id="fxCanvas"></canvas>
 
-<!-- 倒计时区域 -->
 <div class="ui" id="ui">
-  <h1 id="title">距离轩轩生日还有</h1>
-  <p class="lead" id="subtitle">科技时钟正在读秒… 准备好惊喜了吗？</p>
-
-  <div class="countdown" id="countdown">
+  <h1>距离轩轩生日还有</h1>
+  <p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
+  <div class="countdown">
     <div class="cell"><div class="num" id="days">0</div><div class="label">天</div></div>
     <div class="cell"><div class="num" id="hours">0</div><div class="label">小时</div></div>
     <div class="cell"><div class="num" id="minutes">0</div><div class="label">分钟</div></div>
@@ -130,126 +107,94 @@
   </div>
 </div>
 
-<!-- 固定按钮 -->
 <a class="enter-btn" href="story.html">进入我们的故事册</a>
 
-<!-- 生日祝福显示 -->
 <div class="celebration-msg" id="celebrationMsg">
-  <h2>🎂 轩轩生日快乐</h2>
-  <p>冰冰一直都在你身边 💙</p>
+  <h2>🎂 轩轩生日快乐！</h2>
+  <p>冰冰祝你新的一岁光芒万丈 💙</p>
 </div>
 
 <audio id="bgm" src="happy.mp3" preload="auto"></audio>
 
 <script>
 const TARGET = new Date('2025-11-14T00:00:00');
-const CANVAS = document.getElementById('fxCanvas');
-const ctx = CANVAS.getContext('2d');
-let W = CANVAS.width = innerWidth;
-let H = CANVAS.height = innerHeight;
-const daysEl = document.getElementById('days');
-const hoursEl = document.getElementById('hours');
-const minutesEl = document.getElementById('minutes');
-const secondsEl = document.getElementById('seconds');
-const ui = document.getElementById('ui');
-const bgm = document.getElementById('bgm');
-const celebrationMsg = document.getElementById('celebrationMsg');
+const daysEl=document.getElementById('days');
+const hoursEl=document.getElementById('hours');
+const minutesEl=document.getElementById('minutes');
+const secondsEl=document.getElementById('seconds');
+const ui=document.getElementById('ui');
+const celebrationMsg=document.getElementById('celebrationMsg');
+const bgm=document.getElementById('bgm');
 
-addEventListener('resize', ()=>{ W = CANVAS.width = innerWidth; H = CANVAS.height = innerHeight; });
-let userInteracted = false;
-document.addEventListener('click', () => { userInteracted = true; if(bgm.paused) bgm.play().catch(()=>{}); });
+let userInteracted=false;
+document.addEventListener('click',()=>{userInteracted=true;if(bgm.paused)bgm.play().catch(()=>{});});
 
-function pad(n){ return n.toString().padStart(2,'0'); }
-
-let countdownTimer = setInterval(updateCountdown, 1000);
-updateCountdown();
-
-function updateCountdown(){
-  const now = new Date();
-  let diff = TARGET - now;
-  if(diff <= 0){
-    clearInterval(countdownTimer);
-    showCelebration();
+function pad(n){return n.toString().padStart(2,'0');}
+let timer=setInterval(update,1000);
+update();
+function update(){
+  const now=new Date();
+  const diff=TARGET-now;
+  if(diff<=0){
+    clearInterval(timer);
+    startCelebration();
     return;
   }
-  const d = Math.floor(diff / (1000*60*60*24));
-  const h = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-  const m = Math.floor((diff % (1000*60*60)) / (1000*60));
-  const s = Math.floor((diff % (1000*60)) / 1000);
-  daysEl.textContent = d;
-  hoursEl.textContent = pad(h);
-  minutesEl.textContent = pad(m);
-  secondsEl.textContent = pad(s);
+  const d=Math.floor(diff/(1000*60*60*24));
+  const h=Math.floor(diff%(1000*60*60*24)/(1000*60*60));
+  const m=Math.floor(diff%(1000*60*60)/(1000*60));
+  const s=Math.floor(diff%(1000*60)/1000);
+  daysEl.textContent=d;
+  hoursEl.textContent=pad(h);
+  minutesEl.textContent=pad(m);
+  secondsEl.textContent=pad(s);
 }
 
-let particles = [], hearts = [];
-class P {
-  constructor(x,y,dx,dy,size,color,life){this.x=x;this.y=y;this.vx=dx;this.vy=dy;this.r=size;this.c=color;this.life=life||1;this.alpha=1;}
-  update(dt){this.x+=this.vx*dt;this.y+=this.vy*dt;this.vy*=0.999;this.alpha-=0.008*dt;this.life-=0.008*dt;}
-  draw(g){g.save();g.globalAlpha=Math.max(this.alpha,0);g.fillStyle=this.c;g.beginPath();g.arc(this.x,this.y,this.r,0,Math.PI*2);g.fill();g.restore();}
-}
-function spawnNeonBurst(x,y,count){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=60+Math.random()*220;particles.push(new P(x,y,Math.cos(a)*s,Math.sin(a)*s,2+Math.random()*5,`hsl(${180+Math.random()*120},90%,60%)`,1));}}
-function spawnHeartParticles(total=160){const scale=Math.min(W,H)/60;for(let i=0;i<total;i++){const t=(i/total)*Math.PI*2;const x=16*Math.pow(Math.sin(t),3);const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);const px=W/2+x*scale, py=H/2-y*scale;hearts.push(new P(px,py,(Math.random()-0.5)*20,(Math.random()-0.5)*20,3+Math.random()*3,`hsl(${320+Math.random()*40},90%,65%)`,2.2));}}
-function loop(){ctx.clearRect(0,0,W,H);for(let p of particles)p.update(1),p.draw(ctx);for(let p of hearts)p.update(0.6),p.draw(ctx);particles=particles.filter(p=>p.life>0&&p.alpha>0);hearts=hearts.filter(p=>p.life>0&&p.alpha>0);requestAnimationFrame(loop);}requestAnimationFrame(loop);
-
-function showCelebration(){
-  // 淡出倒计时
+function startCelebration(){
   ui.classList.add('fade-out');
-  setTimeout(()=>ui.remove(),1200);
+  setTimeout(()=>ui.remove(),1000);
+  setTimeout(()=>celebrationMsg.classList.add('show'),1200);
+  if(userInteracted){bgm.loop=true;bgm.play().catch(()=>{});}
+  else alert('🎵 点一下页面播放生日快乐歌～');
+  startDanmu();
+}
 
-  // 显示祝福内容
-  setTimeout(()=>{
-    celebrationMsg.classList.add('show');
-  },1200);
-
-  // 音乐
-  if(userInteracted){ bgm.volume = 0.6; bgm.loop = true; bgm.play().catch(()=>{}); }
-  else alert("🎵 点一下页面，开启生日快乐歌！");
-
-  // 特效
-  spawnNeonBurst(W/2,H/2,220);
-  setTimeout(()=>spawnHeartParticles(240),600);
-
-  // 弹幕
-  const messages = [
-    "嘿，轩轩～今天是你的生日！🥳",
-    "又长大一岁啦，越来越帅了是不是～",
-    "蛋糕一定要吃，愿望一定实现🎂",
-    "希望你这一年都顺顺利利✨",
-    "多笑笑，压力都给我扔掉！😝",
-    "其实有点想你~",
-    "你真的很棒💪",
-    "我一直在这儿，看着你一点点变好💙",
-    "天天开心！🌈"
+function startDanmu(){
+  const texts=[
+    "🎉 轩轩生日快乐！",
+    "🎂 又长大一岁啦～",
+    "✨ 愿你这一年闪闪发光！",
+    "💙 冰冰一直都在你身边",
+    "🎈 愿你被世界温柔以待",
+    "🍰 生活要甜，梦想要圆",
+    "😚 记得天天开心呀～",
+    "🌈 一切都会越来越好！"
   ];
-  const colors = [
-    "rgba(255,255,255,0.8)",
-    "rgba(51,209,255,0.9)",
-    "rgba(122,255,194,0.9)",
-    "rgba(255,168,255,0.9)",
-    "rgba(255,240,180,0.9)"
+  const colors=[
+    "#33d1ff","#7affc2","#ffb7ff","#ffee99","#ff8f8f","#aaffff"
   ];
 
-  function createPopup(text){
-    const msg=document.createElement('div');
-    msg.className='popup-message';
-    msg.textContent=text;
-    msg.style.color=colors[Math.floor(Math.random()*colors.length)];
-    msg.style.left=(20+Math.random()*60)+'%';
-    msg.style.top=(20+Math.random()*60)+'%';
-    msg.style.transform=`translate(-50%,-50%) scale(${0.6+Math.random()*0.4})`;
-    document.body.appendChild(msg);
-    requestAnimationFrame(()=>{msg.style.opacity='1';msg.style.transform+=' scale(1.1)';});
-    setTimeout(()=>{msg.style.opacity='0';msg.style.transform+=' scale(1.3)';setTimeout(()=>msg.remove(),800);},2500+Math.random()*800);
+  function createDanmu(){
+    const text=texts[Math.floor(Math.random()*texts.length)];
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const div=document.createElement('div');
+    div.className='danmu';
+    div.textContent=text;
+    div.style.color=color;
+    const fromRight=Math.random()>0.5;
+    div.style.top=Math.random()*80+10+"%";
+    div.style.fontSize=(18+Math.random()*10)+"px";
+    div.style.animation=`${fromRight?'floatLeft':'floatRight'} ${6+Math.random()*3}s linear`;
+    document.body.appendChild(div);
+    requestAnimationFrame(()=>div.style.opacity='1');
+    setTimeout(()=>div.remove(),9000);
   }
 
-  function popupWave(){
-    for(let i=0;i<messages.length;i++){
-      setTimeout(()=>createPopup(messages[i]),i*150);
-    }
-  }
-  popupWave();
-  setInterval(popupWave, 6000);
+  // 每隔1秒随机生成1~2条弹幕
+  setInterval(()=>{
+    const n=1+Math.floor(Math.random()*2);
+    for(let i=0;i<n;i++) setTimeout(createDanmu,Math.random()*500);
+  },1000);
 }
 </script>
 </body>
