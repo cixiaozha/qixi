@@ -11,7 +11,10 @@
     --accent2:#7affc2;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+  html,body{
+    height:100%;margin:0;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+  }
   body{
     background: radial-gradient(1200px 600px at 10% 20%, rgba(15,30,60,0.35), transparent),
                 linear-gradient(180deg,var(--bg1) 0%, #07101a 100%);
@@ -36,7 +39,7 @@
     backdrop-filter:blur(6px) saturate(120%);
     transition:opacity 1s ease, transform 1s ease;
   }
-  .ui.fade-out{
+  .fade-out{
     opacity:0;
     transform:scale(0.96);
     pointer-events:none;
@@ -73,23 +76,24 @@
   }
 
   .celebration-msg{
-    position:absolute;
-    left:50%;top:50%;
+    position:fixed;
+    left:50%;
+    top:50%;
     transform:translate(-50%,-50%) scale(.9);
     z-index:3;
     pointer-events:none;
     color:#fff;
     text-align:center;
     opacity:0;
+    transition:opacity 1s ease, transform 0.6s ease;
   }
   .celebration-msg.show{
     opacity:1;
     pointer-events:auto;
-    animation:popIn .9s cubic-bezier(.2,.9,.3,1);
+    transform:translate(-50%,-50%) scale(1);
   }
   .celebration-msg h2{font-size:46px;margin:0 0 12px 0;}
   .celebration-msg p{margin:0;color:rgba(255,255,255,0.9);font-size:18px}
-  @keyframes popIn{0%{transform:translate(-50%,-50%) scale(.6);opacity:0}60%{transform:translate(-50%,-50%) scale(1.06);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
 
   .popup-message{
     position:fixed;
@@ -113,6 +117,7 @@
 <body>
 <canvas id="fxCanvas"></canvas>
 
+<!-- 倒计时区域 -->
 <div class="ui" id="ui">
   <h1 id="title">距离轩轩生日还有</h1>
   <p class="lead" id="subtitle">科技时钟正在读秒… 准备好惊喜了吗？</p>
@@ -125,11 +130,13 @@
   </div>
 </div>
 
-<a class="enter-btn" id="enterBtn" href="story.html">进入我们的故事册</a>
+<!-- 固定按钮 -->
+<a class="enter-btn" href="story.html">进入我们的故事册</a>
 
-<div class="celebration-msg" id="celebrationMsg" aria-hidden="true">
-  <h2 id="mainText">🎂 轩轩生日快乐</h2>
-  <p id="subText">冰冰一直都在你身边 💙</p>
+<!-- 生日祝福显示 -->
+<div class="celebration-msg" id="celebrationMsg">
+  <h2>🎂 轩轩生日快乐</h2>
+  <p>冰冰一直都在你身边 💙</p>
 </div>
 
 <audio id="bgm" src="happy.mp3" preload="auto"></audio>
@@ -147,8 +154,6 @@ const secondsEl = document.getElementById('seconds');
 const ui = document.getElementById('ui');
 const bgm = document.getElementById('bgm');
 const celebrationMsg = document.getElementById('celebrationMsg');
-const title = document.getElementById('title');
-const subtitle = document.getElementById('subtitle');
 
 addEventListener('resize', ()=>{ W = CANVAS.width = innerWidth; H = CANVAS.height = innerHeight; });
 let userInteracted = false;
@@ -187,20 +192,25 @@ function spawnNeonBurst(x,y,count){for(let i=0;i<count;i++){const a=Math.random(
 function spawnHeartParticles(total=160){const scale=Math.min(W,H)/60;for(let i=0;i<total;i++){const t=(i/total)*Math.PI*2;const x=16*Math.pow(Math.sin(t),3);const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);const px=W/2+x*scale, py=H/2-y*scale;hearts.push(new P(px,py,(Math.random()-0.5)*20,(Math.random()-0.5)*20,3+Math.random()*3,`hsl(${320+Math.random()*40},90%,65%)`,2.2));}}
 function loop(){ctx.clearRect(0,0,W,H);for(let p of particles)p.update(1),p.draw(ctx);for(let p of hearts)p.update(0.6),p.draw(ctx);particles=particles.filter(p=>p.life>0&&p.alpha>0);hearts=hearts.filter(p=>p.life>0&&p.alpha>0);requestAnimationFrame(loop);}requestAnimationFrame(loop);
 
-async function showCelebration(){
+function showCelebration(){
+  // 淡出倒计时
   ui.classList.add('fade-out');
-  title.style.opacity = '0';
-  subtitle.style.opacity = '0';
+  setTimeout(()=>ui.remove(),1200);
 
-  if(userInteracted){
-    bgm.volume = 0.6; bgm.loop = true;
-    bgm.play().catch(()=>{alert("点一下页面以开启音乐哦🎵");});
-  } else alert("🎵 点一下页面，开启生日快乐歌！");
+  // 显示祝福内容
+  setTimeout(()=>{
+    celebrationMsg.classList.add('show');
+  },1200);
 
+  // 音乐
+  if(userInteracted){ bgm.volume = 0.6; bgm.loop = true; bgm.play().catch(()=>{}); }
+  else alert("🎵 点一下页面，开启生日快乐歌！");
+
+  // 特效
   spawnNeonBurst(W/2,H/2,220);
   setTimeout(()=>spawnHeartParticles(240),600);
-  celebrationMsg.classList.add('show');
 
+  // 弹幕
   const messages = [
     "嘿，轩轩～今天是你的生日！🥳",
     "又长大一岁啦，越来越帅了是不是～",
@@ -233,14 +243,13 @@ async function showCelebration(){
     setTimeout(()=>{msg.style.opacity='0';msg.style.transform+=' scale(1.3)';setTimeout(()=>msg.remove(),800);},2500+Math.random()*800);
   }
 
-  // 弹幕持续循环
   function popupWave(){
     for(let i=0;i<messages.length;i++){
       setTimeout(()=>createPopup(messages[i]),i*150);
     }
   }
   popupWave();
-  setInterval(popupWave, 6000); // 每隔6秒循环一次
+  setInterval(popupWave, 6000);
 }
 </script>
 </body>
