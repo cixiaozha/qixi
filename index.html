@@ -105,7 +105,7 @@
     font-weight:600;
     opacity:0;
     box-shadow:0 0 20px rgba(51,209,255,0.3);
-    transition:all 0.3s ease;
+    transition:all 0.8s ease;
     z-index:99;
     pointer-events:none;
   }
@@ -187,7 +187,7 @@ function showCelebration(){
   startPopups();
 }
 
-// ✅弹幕循环出现
+// ✅弹幕循环出现（更快）
 function startPopups(){
   const messages = [
     "轩轩～生日快乐！🥳",
@@ -239,7 +239,7 @@ function startPopups(){
   function randomPopupLoop(){
     const text = messages[Math.floor(Math.random()*messages.length)];
     createPopup(text);
-    const next = 400 + Math.random()*1200; // 下次出现间隔随机
+    const next = Math.random() * 400; // ⚡ 弹幕出现间隔更快（0~0.4秒）
     setTimeout(randomPopupLoop, next);
   }
 
@@ -248,4 +248,3 @@ function startPopups(){
 </script>
 </body>
 </html>
-
