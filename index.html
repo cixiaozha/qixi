@@ -84,6 +84,25 @@
   .celebration-msg h2{font-size:46px;margin:0 0 12px 0;}
   .celebration-msg p{margin:0;color:rgba(255,255,255,0.9);font-size:18px}
   @keyframes popIn{0%{transform:translate(-50%,-50%) scale(.6);opacity:0}60%{transform:translate(-50%,-50%) scale(1.06);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
+
+  /* ✨ 弹窗祝福样式 */
+  .popup-message{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(0.8);
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(6px);
+    padding:16px 24px;
+    border-radius:14px;
+    color:#fff;
+    font-size:18px;
+    font-weight:600;
+    box-shadow:0 0 20px rgba(51,209,255,0.3);
+    opacity:0;
+    transition:all 0.8s ease;
+    z-index:99;
+  }
 </style>
 </head>
 <body>
@@ -108,7 +127,7 @@
   <p id="subText">冰冰一直都在你身边 💙</p>
 </div>
 
-<!-- 🎵 生日快乐歌（你可以换成自己喜欢的mp3链接） -->
+<!-- 🎵 生日快乐歌（你可以换成自己的录音） -->
 <audio id="bgm" src="happy.mp3" preload="auto"></audio>
 
 <script>
@@ -157,7 +176,7 @@ if(new Date() >= TARGET){
   setTimeout(showCelebration, 300);
 }
 
-// ✨ 粒子 + 动画部分
+// ✨ 粒子动画
 let particles = [], hearts = [], celebrationActive = false;
 class P {
   constructor(x,y,dx,dy,size,color,life){this.x=x;this.y=y;this.vx=dx;this.vy=dy;this.r=size;this.c=color;this.life=life||1;this.alpha=1;}
@@ -166,13 +185,15 @@ class P {
 }
 function spawnNeonBurst(x,y,count){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=60+Math.random()*220;particles.push(new P(x,y,Math.cos(a)*s,Math.sin(a)*s,2+Math.random()*5,`hsl(${180+Math.random()*120},90%,60%)`,1));}}
 function spawnHeartParticles(total=160){const scale=Math.min(W,H)/60;for(let i=0;i<total;i++){const t=(i/total)*Math.PI*2;const x=16*Math.pow(Math.sin(t),3);const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);const px=W/2+x*scale, py=H/2-y*scale;hearts.push(new P(px,py,(Math.random()-0.5)*20,(Math.random()-0.5)*20,3+Math.random()*3,`hsl(${320+Math.random()*40},90%,65%)`,2.2));}}
-function loop(now){ctx.clearRect(0,0,W,H);for(let p of particles)p.update(1),p.draw(ctx);for(let p of hearts)p.update(0.6),p.draw(ctx);particles=particles.filter(p=>p.life>0&&p.alpha>0);hearts=hearts.filter(p=>p.life>0&&p.alpha>0);requestAnimationFrame(loop);}requestAnimationFrame(loop);
+function loop(){ctx.clearRect(0,0,W,H);for(let p of particles)p.update(1),p.draw(ctx);for(let p of hearts)p.update(0.6),p.draw(ctx);particles=particles.filter(p=>p.life>0&&p.alpha>0);hearts=hearts.filter(p=>p.life>0&&p.alpha>0);requestAnimationFrame(loop);}requestAnimationFrame(loop);
 
+// 🎉 显示庆祝动画 + 祝福弹窗
 async function showCelebration(){
   if(celebrationActive)return;
   celebrationActive=true;
   ui.classList.add('fade-out');
   await new Promise(r=>setTimeout(r,400));
+
   if(userInteracted){
     bgm.volume = 0.6;
     bgm.loop = true;
@@ -180,11 +201,46 @@ async function showCelebration(){
   } else {
     alert("🎵 点一下页面，开启生日快乐歌！");
   }
+
   spawnNeonBurst(W/2,H/2,220);
   setTimeout(()=>spawnHeartParticles(240),600);
   celebrationMsg.classList.add('show');
+
+  // 🎈弹窗祝福语
+  const messages = [
+    "嘿，轩轩～今天是你的生日！🥳",
+  "又长大一岁啦，越来越帅了是不是～",
+  "蛋糕一定要吃，愿望一定实现",
+  "希望你这一年都顺顺利利",
+  "多笑笑，压力都给我扔掉！",
+  "其实有点想你~",
+  "你真的很棒",
+  "我一直在这儿，看着你一点点变好。💙",
+    "天天开心！"
+  ];
+
+  function showPopupMessages() {
+    let i = 0;
+    function next() {
+      if (i >= messages.length) return;
+      const msg = document.createElement('div');
+      msg.className = 'popup-message';
+      msg.textContent = messages[i++];
+      document.body.appendChild(msg);
+      requestAnimationFrame(() => {
+        msg.style.opacity = '1';
+        msg.style.transform = 'translate(-50%, -50%) scale(1)';
+      });
+      setTimeout(() => {
+        msg.style.opacity = '0';
+        msg.style.transform = 'translate(-50%, -50%) scale(1.2)';
+        setTimeout(() => { msg.remove(); next(); }, 800);
+      }, 2500);
+    }
+    next();
+  }
+  setTimeout(showPopupMessages, 1200);
 }
 </script>
 </body>
 </html>
-
