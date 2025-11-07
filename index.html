@@ -1,215 +1,251 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>轩轩生日倒计时</title>
 <style>
-body {
-  margin:0;
-  overflow:hidden;
-  font-family:'Microsoft YaHei',sans-serif;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
-  color:#fff;
-  text-align:center;
-}
-h1 {
-  margin-top:60px;
-  font-size:2.2em;
-}
-.lead {
-  font-size:1.1em;
-  opacity:0.8;
-}
-.countdown {
-  margin-top:20px;
-  font-size:2em;
-  display:flex;
-  justify-content:center;
-  gap:20px;
-  transition:opacity .8s ease,transform .8s ease;
-}
-.countdown.fade-out {
-  opacity:0;
-  transform:translateY(-10px) scale(0.9);
-  pointer-events:none;
-}
-.time-box {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-.num {
-  font-size:2.4em;
-  font-weight:bold;
-  color:#00eaff;
-}
-.label {
-  font-size:0.9em;
-  opacity:0.7;
-}
-.celebration-message {
-  position:absolute;
-  top:40%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  font-size:2em;
-  opacity:0;
-  transition:opacity 1s;
-}
-.celebration-message.show {
-  opacity:1;
-}
-.enter-btn {
-  position:fixed;
-  right:24px;
-  bottom:24px;
-  background:rgba(0,255,255,0.15);
-  border:1px solid rgba(0,255,255,0.4);
-  color:#00eaff;
-  padding:14px 26px;
-  border-radius:50px;
-  font-size:15px;
-  text-decoration:none;
-  backdrop-filter:blur(6px);
-  box-shadow:0 8px 20px rgba(51,209,255,0.25),0 2px 6px rgba(0,0,0,0.3);
-  transition:all .3s;
-  z-index:20;
-}
-.enter-btn:hover {
-  transform:translateY(-3px) scale(1.05);
-  box-shadow:0 0 25px rgba(0,255,255,0.4);
-}
-.popup-message {
-  position:fixed;
-  white-space:nowrap;
-  font-size:1.1em;
-  font-weight:500;
-  color:#fff;
-  text-shadow:0 0 8px rgba(0,255,255,0.8);
-  animation:floatLeft 6s linear forwards;
-  opacity:0.95;
-  pointer-events:none;
-}
-@keyframes floatLeft {
-  0% { transform:translateX(100vw) translateY(0); opacity:1; }
-  90% { opacity:1; }
-  100% { transform:translateX(-120vw) translateY(-30px); opacity:0; }
-}
+  :root {
+    --bg1: #0b1220;
+    --accent: #33d1ff;
+    --accent2: #7affc2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    height:100%;
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+    overflow:hidden;
+  }
+  body{
+    background: radial-gradient(circle at 20% 20%, rgba(40,80,120,0.3), transparent),
+                linear-gradient(180deg, var(--bg1) 0%, #07101a 100%);
+    color:#cfeeff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  #fxCanvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  .ui{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:28px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.05);
+    box-shadow:0 0 30px rgba(0,0,0,0.4);
+    backdrop-filter:blur(8px);
+    transition:opacity 1s ease, transform 1s ease;
+  }
+  .fade-out{
+    opacity:0;
+    transform:scale(0.9);
+    pointer-events:none;
+  }
+
+  h1{margin-bottom:12px;font-size:28px;color:#dff9ff;}
+  .lead{color:#aeeaff;margin-bottom:22px;font-size:14px;}
+  .countdown{display:flex;gap:16px;justify-content:center;margin-bottom:20px;}
+  .cell{min-width:80px;padding:10px 0;border-radius:10px;background:rgba(255,255,255,0.05);}
+  .num{font-size:30px;font-weight:700;}
+  .label{font-size:12px;color:rgba(255,255,255,0.7);}
+
+  .enter-btn{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#07101a;
+    border-radius:999px;
+    padding:12px 24px;
+    font-weight:600;
+    text-decoration:none;
+    z-index:100;
+    box-shadow:0 0 12px rgba(122,255,194,0.4);
+    transition:transform .2s;
+  }
+  .enter-btn:hover{transform:translateY(-3px);}
+
+  .celebration-msg{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) scale(.9);
+    opacity:0;
+    z-index:10;
+    text-align:center;
+    color:#fff;
+    transition:opacity 1s ease, transform .6s ease;
+  }
+  .celebration-msg.show{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+  }
+  .celebration-msg h2{font-size:44px;margin-bottom:12px;}
+  .celebration-msg p{font-size:18px;opacity:0.9;}
+
+  /* 弹幕样式 */
+  .popup-message{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(0.8);
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(6px);
+    padding:12px 20px;
+    border-radius:12px;
+    color:#fff;
+    font-size:18px;
+    font-weight:600;
+    opacity:0;
+    box-shadow:0 0 20px rgba(51,209,255,0.3);
+    transition:all 0.8s ease;
+    z-index:99;
+    pointer-events:none;
+  }
 </style>
 </head>
 <body>
+<canvas id="fxCanvas"></canvas>
 
-<h1>距离轩轩生日还有</h1>
-<p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
-
-<div class="countdown" id="countdown">
-  <div class="time-box"><div class="num" id="days">00</div><div class="label">天</div></div>
-  <div class="time-box"><div class="num" id="hours">00</div><div class="label">时</div></div>
-  <div class="time-box"><div class="num" id="minutes">00</div><div class="label">分</div></div>
-  <div class="time-box"><div class="num" id="seconds">00</div><div class="label">秒</div></div>
+<div class="ui" id="ui">
+  <h1>距离轩轩生日还有</h1>
+  <p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
+  <div class="countdown" id="countdown">
+    <div class="cell"><div class="num" id="days">0</div><div class="label">天</div></div>
+    <div class="cell"><div class="num" id="hours">00</div><div class="label">小时</div></div>
+    <div class="cell"><div class="num" id="minutes">00</div><div class="label">分钟</div></div>
+    <div class="cell"><div class="num" id="seconds">00</div><div class="label">秒</div></div>
+  </div>
 </div>
 
-<div class="celebration-message" id="celebrationMsg">🎉 生日快乐，轩轩 🎂</div>
 <a class="enter-btn" href="story.html">进入我们的故事册</a>
 
+<div class="celebration-msg" id="celebrationMsg">
+  <h2>🎉 轩轩生日快乐！</h2>
+  <p>愿这一年每一天都闪闪发光 ✨</p>
+</div>
+
+<audio id="bgm" src="happy.mp3" preload="auto"></audio>
+
 <script>
-const messages = [
-  "生日快乐轩轩！！🎉",
-  "今天必须是你的高光时刻！",
-  "嘿，主角出场啦～",
-  "新的一岁要继续闪闪发光哦✨",
-  "记得吃蛋糕、喝奶茶、笑一整天～",
-  "这次的愿望我帮你守着🤍",
-  "要每天都开心，听到没😏",
-  "变优秀也别忘了可爱自己呀～",
-  "你真的很棒，一直都是。",
-  "偷偷告诉你，我也超期待今天的～",
-  "今年也要被温柔对待！🎂",
-  "希望你的生活甜过蛋糕！🍰",
-  "多笑一点，烦恼就不敢靠近啦～",
-  "不止今天，未来每一天都要被爱包围。",
-  "被风吹起的那刻，也有我祝福在飘～💙",
-  "愿你做的梦全都能成真。",
-  "嘿！许愿的时候记得想我一下嘛😆",
-  "这一年要更勇敢、更自由。",
-  "快去吹蜡烛啦，不然蜡都化光了🤣",
-  "未来也继续是耀眼的轩轩～✨",
-  "希望这条弹幕刚好被你看到💌",
-  "就算世界吵闹，我也祝你温柔一岁。",
-  "生日不止今天，这份喜欢全年有效❤️",
-  "还记得上次你笑的样子嘛？今天也要那样！",
-  "要幸福到溢出来才行～"
-];
-
-// 倒计时逻辑
-const countdownEl = document.getElementById('countdown');
+const target = new Date('2025-11-14T00:00:00');
+const ui = document.getElementById('ui');
+const bgm = document.getElementById('bgm');
 const celebrationMsg = document.getElementById('celebrationMsg');
-let celebrationActive = false;
 
-// 修改目标时间（示例：2025年11月8日0点）
-const targetDate = new Date('2025-11-08T00:00:00');
+const daysEl = document.getElementById('days');
+const hoursEl = document.getElementById('hours');
+const minutesEl = document.getElementById('minutes');
+const secondsEl = document.getElementById('seconds');
+
+let interacted = false;
+document.addEventListener('click', ()=>{ interacted = true; bgm.play().catch(()=>{}); });
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+let timer = setInterval(updateCountdown, 1000);
+updateCountdown();
 
 function updateCountdown(){
   const now = new Date();
-  const diff = targetDate - now;
+  let diff = target - now;
   if(diff <= 0){
+    clearInterval(timer);
     showCelebration();
     return;
   }
-  const d = Math.floor(diff / (1000*60*60*24));
-  const h = Math.floor((diff / (1000*60*60)) % 24);
-  const m = Math.floor((diff / (1000*60)) % 60);
-  const s = Math.floor((diff / 1000) % 60);
-  document.getElementById('days').textContent = d.toString().padStart(2,'0');
-  document.getElementById('hours').textContent = h.toString().padStart(2,'0');
-  document.getElementById('minutes').textContent = m.toString().padStart(2,'0');
-  document.getElementById('seconds').textContent = s.toString().padStart(2,'0');
+  const d = Math.floor(diff/(1000*60*60*24));
+  const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+  const m = Math.floor((diff%(1000*60*60))/(1000*60));
+  const s = Math.floor((diff%(1000*60))/1000);
+  daysEl.textContent = d;
+  hoursEl.textContent = pad(h);
+  minutesEl.textContent = pad(m);
+  secondsEl.textContent = pad(s);
 }
-const timer = setInterval(updateCountdown, 1000);
-updateCountdown();
 
-// 庆祝阶段
 function showCelebration(){
-  if(celebrationActive) return;
-  celebrationActive = true;
-  clearInterval(timer);
+  ui.classList.add('fade-out');
+  setTimeout(()=>{ ui.style.display='none'; },1000);
 
-  // 淡出倒计时
-  countdownEl.classList.add('fade-out');
-  setTimeout(()=>{ countdownEl.style.display='none'; }, 800);
-
-  // 显示生日祝福文字
   celebrationMsg.classList.add('show');
+  if(interacted){
+    bgm.volume=0.6;
+    bgm.loop=true;
+    bgm.play().catch(()=>{});
+  }else{
+    alert("🎵 点一下页面，播放生日快乐歌！");
+  }
 
-  // 启动弹幕效果
-  startPopupMessages();
+  startPopups();
 }
 
-// 弹幕生成逻辑
-function createPopupMessage(){
-  const msg = document.createElement('div');
-  msg.className = 'popup-message';
-  msg.textContent = messages[Math.floor(Math.random()*messages.length)];
-  // 随机高度
-  const top = Math.random() * (window.innerHeight - 150);
-  msg.style.top = `${top}px`;
-  // 随机字体大小和透明度
-  msg.style.fontSize = (14 + Math.random()*10) + 'px';
-  msg.style.opacity = 0.7 + Math.random()*0.4;
-  document.body.appendChild(msg);
-  // 移除
-  setTimeout(()=>msg.remove(),6000);
-}
+// ✅弹幕循环出现
+function startPopups(){
+  const messages = [
+    "轩轩～生日快乐！🥳",
+    "又长大一岁啦，越来越帅了！",
+    "希望你的笑容永远灿烂🌞",
+    "蛋糕要吃，愿望要实现🎂",
+    "未来一年好运爆棚✨",
+    "冰冰一直都在你身边💙",
+    "生活要甜，心情要亮💫",
+    "今天的你最闪亮！⭐",
+    "永远保持少年感啊～🍀",
+    "所有的好运都奔向你🐾",
+    "新的一岁，要开心要闪耀！🌟",
+    "愿你温柔又有力量💪",
+    "想送你整片星空✨",
+    "这世界因为你变得更可爱💖",
+    "别忘了我一直在给你加油📣",
+    "被喜欢的人喜欢，是最浪漫的事～💞",
+    "每天都要有小小幸福🫶",
+    "这一年也要认真发光呀💎"
+  ];
 
-function startPopupMessages(){
-  // 每0.25秒生成1条弹幕（4条/秒）
-  setInterval(()=>{
-    const burstCount = Math.floor(Math.random()*3)+2; // 一次出现2~4条
-    for(let i=0;i<burstCount;i++){
-      setTimeout(createPopupMessage, Math.random()*200);
-    }
-  },250);
+  const colors = [
+    "rgba(255,255,255,0.9)",
+    "rgba(51,209,255,0.9)",
+    "rgba(255,168,255,0.9)",
+    "rgba(122,255,194,0.9)",
+    "rgba(255,240,180,0.9)"
+  ];
+
+  function createPopup(text){
+    const msg=document.createElement('div');
+    msg.className='popup-message';
+    msg.textContent=text;
+    msg.style.color=colors[Math.floor(Math.random()*colors.length)];
+    msg.style.left=(5+Math.random()*90)+'%';
+    msg.style.top=(10+Math.random()*75)+'%';
+    msg.style.transform=`translate(-50%,-50%) scale(${0.7+Math.random()*0.5})`;
+    document.body.appendChild(msg);
+    requestAnimationFrame(()=>{
+      msg.style.opacity='1';
+      msg.style.transform='translate(-50%,-50%) scale(1)';
+    });
+    setTimeout(()=>{
+      msg.style.opacity='0';
+      msg.style.transform='translate(-50%,-50%) scale(1.3)';
+      setTimeout(()=>msg.remove(),800);
+    }, 2500 + Math.random()*1000);
+  }
+
+  function randomPopupLoop(){
+    const text = messages[Math.floor(Math.random()*messages.length)];
+    createPopup(text);
+    const next = 400 + Math.random()*1200; // 下次出现间隔随机
+    setTimeout(randomPopupLoop, next);
+  }
+
+  randomPopupLoop();
 }
 </script>
 </body>
