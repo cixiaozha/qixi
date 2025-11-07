@@ -90,7 +90,6 @@
   .celebration-msg h2{font-size:44px;margin-bottom:12px;}
   .celebration-msg p{font-size:18px;opacity:0.9;}
 
-  /* 弹幕样式 */
   .popup-message{
     position:fixed;
     left:50%;
@@ -145,9 +144,6 @@ const hoursEl = document.getElementById('hours');
 const minutesEl = document.getElementById('minutes');
 const secondsEl = document.getElementById('seconds');
 
-let interacted = false;
-document.addEventListener('click', ()=>{ interacted = true; bgm.play().catch(()=>{}); });
-
 function pad(n){ return n.toString().padStart(2,'0'); }
 
 let timer = setInterval(updateCountdown, 1000);
@@ -176,18 +172,19 @@ function showCelebration(){
   setTimeout(()=>{ ui.style.display='none'; },1000);
 
   celebrationMsg.classList.add('show');
-  if(interacted){
-    bgm.volume=0.6;
-    bgm.loop=true;
-    bgm.play().catch(()=>{});
-  }else{
-    alert("🎵 点一下页面，播放生日快乐歌！");
+
+  // 🎵 倒计时结束后自动播放音乐（无须点击）
+  bgm.volume = 0.6;
+  bgm.loop = true;
+  const playPromise = bgm.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(err => console.log("音乐自动播放被拦截:", err));
   }
 
   startPopups();
 }
 
-// ✅弹幕循环出现（更快）
+// ✅ 弹幕更密集（每 0~0.2s 一条）
 function startPopups(){
   const messages = [
     "轩轩～生日快乐！🥳",
@@ -239,7 +236,7 @@ function startPopups(){
   function randomPopupLoop(){
     const text = messages[Math.floor(Math.random()*messages.length)];
     createPopup(text);
-    const next = Math.random() * 400; // ⚡ 弹幕出现间隔更快（0~0.4秒）
+    const next = Math.random() * 200; // ⚡更快，0~0.2秒间隔
     setTimeout(randomPopupLoop, next);
   }
 
