@@ -5,196 +5,234 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>轩轩生日倒计时</title>
 <style>
-  :root{
-    --bg1:#0b1220;
-    --accent:#33d1ff;
-    --accent2:#7affc2;
+  :root {
+    --bg1: #0b1220;
+    --accent: #33d1ff;
+    --accent2: #7affc2;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;margin:0;padding:0;}
   html,body{
-    height:100%;margin:0;
-    font-family:Inter,ui-sans-serif,system-ui;
+    height:100%;
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
     overflow:hidden;
   }
   body{
-    background: radial-gradient(1200px 600px at 10% 20%, rgba(15,30,60,0.35), transparent),
-                linear-gradient(180deg,var(--bg1) 0%, #07101a 100%);
+    background: radial-gradient(circle at 20% 20%, rgba(40,80,120,0.3), transparent),
+                linear-gradient(180deg, var(--bg1) 0%, #07101a 100%);
     color:#cfeeff;
-    display:flex;align-items:center;justify-content:center;
-    padding:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
 
-  /* 倒计时部分 */
+  #fxCanvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+
   .ui{
-    position:relative;z-index:2;
+    position:relative;
+    z-index:2;
     text-align:center;
     padding:28px;
     border-radius:16px;
-    background:rgba(255,255,255,0.04);
-    backdrop-filter:blur(6px);
+    background:rgba(255,255,255,0.05);
+    box-shadow:0 0 30px rgba(0,0,0,0.4);
+    backdrop-filter:blur(8px);
     transition:opacity 1s ease, transform 1s ease;
   }
-  .fade-out{opacity:0;transform:scale(0.95);pointer-events:none;}
-  h1{margin:0 0 14px;font-weight:600;font-size:28px;}
-  p.lead{margin:0 0 20px;color:#96f0ff;opacity:0.9;}
-  .countdown{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
-  .cell{min-width:86px;padding:16px;border-radius:12px;background:rgba(255,255,255,0.03);}
-  .num{font-size:34px;font-weight:700;color:#fff;}
-  .label{font-size:12px;color:rgba(255,255,255,0.65);margin-top:6px;}
+  .fade-out{
+    opacity:0;
+    transform:scale(0.9);
+    pointer-events:none;
+  }
 
-  /* 庆祝内容 */
+  h1{margin-bottom:12px;font-size:28px;color:#dff9ff;}
+  .lead{color:#aeeaff;margin-bottom:22px;font-size:14px;}
+  .countdown{display:flex;gap:16px;justify-content:center;margin-bottom:20px;}
+  .cell{min-width:80px;padding:10px 0;border-radius:10px;background:rgba(255,255,255,0.05);}
+  .num{font-size:30px;font-weight:700;}
+  .label{font-size:12px;color:rgba(255,255,255,0.7);}
+
+  .enter-btn{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#07101a;
+    border-radius:999px;
+    padding:12px 24px;
+    font-weight:600;
+    text-decoration:none;
+    z-index:100;
+    box-shadow:0 0 12px rgba(122,255,194,0.4);
+    transition:transform .2s;
+  }
+  .enter-btn:hover{transform:translateY(-3px);}
+
   .celebration-msg{
-    position:fixed;left:50%;top:50%;
+    position:fixed;
+    top:50%;
+    left:50%;
     transform:translate(-50%,-50%) scale(.9);
-    color:#fff;text-align:center;
-    opacity:0;transition:all 1s ease;
-    z-index:5;pointer-events:none;
+    opacity:0;
+    z-index:10;
+    text-align:center;
+    color:#fff;
+    transition:opacity 1s ease, transform .6s ease;
   }
   .celebration-msg.show{
-    opacity:1;transform:translate(-50%,-50%) scale(1);
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
   }
-  .celebration-msg h2{font-size:46px;margin:0 0 12px;}
-  .celebration-msg p{margin:0;font-size:18px;}
+  .celebration-msg h2{font-size:44px;margin-bottom:12px;}
+  .celebration-msg p{font-size:18px;opacity:0.9;}
 
-  /* 右下角按钮 */
-  .enter-btn{
-    position:fixed;bottom:24px;right:24px;
-    padding:12px 24px;border-radius:999px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    color:#07101a;font-weight:700;text-decoration:none;
-    box-shadow:0 8px 30px rgba(51,209,255,0.2);
-    z-index:10;
-    transition:transform .25s;
-  }
-  .enter-btn:hover{transform:translateY(-4px);}
-
-  /* 弹幕 */
-  .danmu{
+  /* 弹幕样式 */
+  .popup-message{
     position:fixed;
-    white-space:nowrap;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(0.8);
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(6px);
+    padding:12px 20px;
+    border-radius:12px;
+    color:#fff;
     font-size:18px;
     font-weight:600;
-    z-index:20;
     opacity:0;
+    box-shadow:0 0 20px rgba(51,209,255,0.3);
+    transition:all 0.8s ease;
+    z-index:99;
     pointer-events:none;
-    text-shadow:0 0 8px rgba(255,255,255,0.6);
-    transition:opacity 1s;
-  }
-  @keyframes floatLeft{
-    0%{transform:translateX(100vw);opacity:0;}
-    10%{opacity:1;}
-    90%{opacity:1;}
-    100%{transform:translateX(-100vw);opacity:0;}
-  }
-  @keyframes floatRight{
-    0%{transform:translateX(-100vw);opacity:0;}
-    10%{opacity:1;}
-    90%{opacity:1;}
-    100%{transform:translateX(100vw);opacity:0;}
   }
 </style>
 </head>
 <body>
+<canvas id="fxCanvas"></canvas>
 
 <div class="ui" id="ui">
   <h1>距离轩轩生日还有</h1>
   <p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
-  <div class="countdown">
+  <div class="countdown" id="countdown">
     <div class="cell"><div class="num" id="days">0</div><div class="label">天</div></div>
-    <div class="cell"><div class="num" id="hours">0</div><div class="label">小时</div></div>
-    <div class="cell"><div class="num" id="minutes">0</div><div class="label">分钟</div></div>
-    <div class="cell"><div class="num" id="seconds">0</div><div class="label">秒</div></div>
+    <div class="cell"><div class="num" id="hours">00</div><div class="label">小时</div></div>
+    <div class="cell"><div class="num" id="minutes">00</div><div class="label">分钟</div></div>
+    <div class="cell"><div class="num" id="seconds">00</div><div class="label">秒</div></div>
   </div>
 </div>
 
 <a class="enter-btn" href="story.html">进入我们的故事册</a>
 
 <div class="celebration-msg" id="celebrationMsg">
-  <h2>🎂 轩轩生日快乐！</h2>
-  <p>冰冰祝你新的一岁光芒万丈 💙</p>
+  <h2>🎉 轩轩生日快乐！</h2>
+  <p>愿这一年每一天都闪闪发光 ✨</p>
 </div>
 
 <audio id="bgm" src="happy.mp3" preload="auto"></audio>
 
 <script>
-const TARGET = new Date('2025-11-14T00:00:00');
-const daysEl=document.getElementById('days');
-const hoursEl=document.getElementById('hours');
-const minutesEl=document.getElementById('minutes');
-const secondsEl=document.getElementById('seconds');
-const ui=document.getElementById('ui');
-const celebrationMsg=document.getElementById('celebrationMsg');
-const bgm=document.getElementById('bgm');
+const target = new Date('2025-11-14T00:00:00');
+const ui = document.getElementById('ui');
+const bgm = document.getElementById('bgm');
+const celebrationMsg = document.getElementById('celebrationMsg');
 
-let userInteracted=false;
-document.addEventListener('click',()=>{userInteracted=true;if(bgm.paused)bgm.play().catch(()=>{});});
+const daysEl = document.getElementById('days');
+const hoursEl = document.getElementById('hours');
+const minutesEl = document.getElementById('minutes');
+const secondsEl = document.getElementById('seconds');
 
-function pad(n){return n.toString().padStart(2,'0');}
-let timer=setInterval(update,1000);
-update();
-function update(){
-  const now=new Date();
-  const diff=TARGET-now;
-  if(diff<=0){
+let interacted = false;
+document.addEventListener('click', ()=>{ interacted = true; bgm.play().catch(()=>{}); });
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+let timer = setInterval(updateCountdown, 1000);
+updateCountdown();
+
+function updateCountdown(){
+  const now = new Date();
+  let diff = target - now;
+  if(diff <= 0){
     clearInterval(timer);
-    startCelebration();
+    showCelebration();
     return;
   }
-  const d=Math.floor(diff/(1000*60*60*24));
-  const h=Math.floor(diff%(1000*60*60*24)/(1000*60*60));
-  const m=Math.floor(diff%(1000*60*60)/(1000*60));
-  const s=Math.floor(diff%(1000*60)/1000);
-  daysEl.textContent=d;
-  hoursEl.textContent=pad(h);
-  minutesEl.textContent=pad(m);
-  secondsEl.textContent=pad(s);
+  const d = Math.floor(diff/(1000*60*60*24));
+  const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+  const m = Math.floor((diff%(1000*60*60))/(1000*60));
+  const s = Math.floor((diff%(1000*60))/1000);
+  daysEl.textContent = d;
+  hoursEl.textContent = pad(h);
+  minutesEl.textContent = pad(m);
+  secondsEl.textContent = pad(s);
 }
 
-function startCelebration(){
+function showCelebration(){
   ui.classList.add('fade-out');
-  setTimeout(()=>ui.remove(),1000);
-  setTimeout(()=>celebrationMsg.classList.add('show'),1200);
-  if(userInteracted){bgm.loop=true;bgm.play().catch(()=>{});}
-  else alert('🎵 点一下页面播放生日快乐歌～');
-  startDanmu();
-}
+  setTimeout(()=>{ ui.style.display='none'; },1000);
 
-function startDanmu(){
-  const texts=[
-    "🎉 轩轩生日快乐！",
-    "🎂 又长大一岁啦～",
-    "✨ 愿你这一年闪闪发光！",
-    "💙 冰冰一直都在你身边",
-    "🎈 愿你被世界温柔以待",
-    "🍰 生活要甜，梦想要圆",
-    "😚 记得天天开心呀～",
-    "🌈 一切都会越来越好！"
-  ];
-  const colors=[
-    "#33d1ff","#7affc2","#ffb7ff","#ffee99","#ff8f8f","#aaffff"
-  ];
-
-  function createDanmu(){
-    const text=texts[Math.floor(Math.random()*texts.length)];
-    const color=colors[Math.floor(Math.random()*colors.length)];
-    const div=document.createElement('div');
-    div.className='danmu';
-    div.textContent=text;
-    div.style.color=color;
-    const fromRight=Math.random()>0.5;
-    div.style.top=Math.random()*80+10+"%";
-    div.style.fontSize=(18+Math.random()*10)+"px";
-    div.style.animation=`${fromRight?'floatLeft':'floatRight'} ${6+Math.random()*3}s linear`;
-    document.body.appendChild(div);
-    requestAnimationFrame(()=>div.style.opacity='1');
-    setTimeout(()=>div.remove(),9000);
+  celebrationMsg.classList.add('show');
+  if(interacted){
+    bgm.volume=0.6;
+    bgm.loop=true;
+    bgm.play().catch(()=>{});
+  }else{
+    alert("🎵 点一下页面，播放生日快乐歌！");
   }
 
-  // 每隔1秒随机生成1~2条弹幕
-  setInterval(()=>{
-    const n=1+Math.floor(Math.random()*2);
-    for(let i=0;i<n;i++) setTimeout(createDanmu,Math.random()*500);
-  },1000);
+  startPopups();
+}
+
+// ✅弹幕循环出现
+function startPopups(){
+  const messages = [
+    "轩轩～生日快乐！🥳",
+    "又长大一岁啦，越来越帅了！",
+    "希望你的笑容永远灿烂🌞",
+    "蛋糕要吃，愿望要实现🎂",
+    "未来一年好运爆棚✨",
+    "冰冰一直都在你身边💙",
+    "生活要甜，心情要亮💫",
+    "今天的你最闪亮！⭐",
+  ];
+  const colors = [
+    "rgba(255,255,255,0.9)",
+    "rgba(51,209,255,0.9)",
+    "rgba(255,168,255,0.9)",
+    "rgba(122,255,194,0.9)",
+  ];
+
+  function createPopup(text){
+    const msg=document.createElement('div');
+    msg.className='popup-message';
+    msg.textContent=text;
+    msg.style.color=colors[Math.floor(Math.random()*colors.length)];
+    msg.style.left=(20+Math.random()*60)+'%';
+    msg.style.top=(20+Math.random()*60)+'%';
+    document.body.appendChild(msg);
+    requestAnimationFrame(()=>{
+      msg.style.opacity='1';
+      msg.style.transform='translate(-50%,-50%) scale(1)';
+    });
+    setTimeout(()=>{
+      msg.style.opacity='0';
+      msg.style.transform='translate(-50%,-50%) scale(1.2)';
+      setTimeout(()=>msg.remove(),800);
+    },2500+Math.random()*1000);
+  }
+
+  function popupWave(){
+    messages.forEach((m,i)=>{
+      setTimeout(()=>createPopup(m), i*200);
+    });
+  }
+
+  popupWave();
+  setInterval(popupWave, 6000);
 }
 </script>
 </body>
