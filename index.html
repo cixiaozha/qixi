@@ -13,7 +13,7 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{
     height:100%;
-    font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
     overflow:hidden;
   }
   body{
@@ -28,7 +28,7 @@
   #fxCanvas{
     position:fixed;
     inset:0;
-    z-index:0;
+    z-index:1;
     pointer-events:none;
   }
 
@@ -41,7 +41,7 @@
     background:rgba(255,255,255,0.05);
     box-shadow:0 0 30px rgba(0,0,0,0.4);
     backdrop-filter:blur(8px);
-    transition:opacity 1s ease, transform 1s ease;
+    transition:opacity 1s ease,transform 1s ease;
   }
   .fade-out{
     opacity:0;
@@ -78,7 +78,7 @@
     left:50%;
     transform:translate(-50%,-50%) scale(.9);
     opacity:0;
-    z-index:10;
+    z-index:5;
     text-align:center;
     color:#fff;
     transition:opacity 1s ease, transform .6s ease;
@@ -105,7 +105,7 @@
     opacity:0;
     box-shadow:0 0 20px rgba(51,209,255,0.3);
     transition:all 0.8s ease;
-    z-index:99;
+    z-index:4;
     pointer-events:none;
   }
 </style>
@@ -138,81 +138,65 @@ const target = new Date('2025-11-14T00:00:00');
 const ui = document.getElementById('ui');
 const bgm = document.getElementById('bgm');
 const celebrationMsg = document.getElementById('celebrationMsg');
+const canvas = document.getElementById('fxCanvas');
+const ctx = canvas.getContext('2d');
 
-const daysEl = document.getElementById('days');
-const hoursEl = document.getElementById('hours');
-const minutesEl = document.getElementById('minutes');
-const secondsEl = document.getElementById('seconds');
+const daysEl=document.getElementById('days');
+const hoursEl=document.getElementById('hours');
+const minutesEl=document.getElementById('minutes');
+const secondsEl=document.getElementById('seconds');
 
-function pad(n){ return n.toString().padStart(2,'0'); }
-
-let timer = setInterval(updateCountdown, 1000);
+function pad(n){return n.toString().padStart(2,'0');}
+let timer=setInterval(updateCountdown,1000);
 updateCountdown();
 
 function updateCountdown(){
-  const now = new Date();
-  let diff = target - now;
-  if(diff <= 0){
+  const now=new Date();
+  let diff=target-now;
+  if(diff<=0){
     clearInterval(timer);
     showCelebration();
     return;
   }
-  const d = Math.floor(diff/(1000*60*60*24));
-  const h = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-  const m = Math.floor((diff%(1000*60*60))/(1000*60));
-  const s = Math.floor((diff%(1000*60))/1000);
-  daysEl.textContent = d;
-  hoursEl.textContent = pad(h);
-  minutesEl.textContent = pad(m);
-  secondsEl.textContent = pad(s);
+  const d=Math.floor(diff/(1000*60*60*24));
+  const h=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+  const m=Math.floor((diff%(1000*60*60))/(1000*60));
+  const s=Math.floor((diff%(1000*60))/1000);
+  daysEl.textContent=d;
+  hoursEl.textContent=pad(h);
+  minutesEl.textContent=pad(m);
+  secondsEl.textContent=pad(s);
 }
 
 function showCelebration(){
   ui.classList.add('fade-out');
-  setTimeout(()=>{ ui.style.display='none'; },1000);
-
+  setTimeout(()=>{ui.style.display='none';},1000);
   celebrationMsg.classList.add('show');
 
-  // 🎵 倒计时结束后自动播放音乐（无须点击）
-  bgm.volume = 0.6;
-  bgm.loop = true;
-  const playPromise = bgm.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(err => console.log("音乐自动播放被拦截:", err));
-  }
+  // 🎵 自动播放音乐
+  bgm.volume=0.6;
+  bgm.loop=true;
+  const p=bgm.play();
+  if(p!==undefined){p.catch(()=>{});}
 
   startPopups();
+  startFireworks();
 }
 
-// ✅ 弹幕更密集（每 0~0.2s 一条）
+// ✅ 弹幕循环更密集
 function startPopups(){
-  const messages = [
-    "轩轩～生日快乐！🥳",
-    "又长大一岁啦，越来越帅了！",
-    "希望你的笑容永远灿烂🌞",
-    "蛋糕一定要吃，愿望一定实现🎂",
-    "未来一年好运爆棚✨",
-    "生活要甜，心情要亮💫",
-    "今天的你最闪亮！⭐",
-    "所有的好运都奔向你🐾",
-    "新的一岁，要开心要闪耀！🌟",
-    "愿你温柔又有力量💪",
-    "想送你整片星空✨",
-    "这世界因为你变得更可爱💖",
-    "别忘了我一直在给你加油📣",
-    "被喜欢的人喜欢，是最浪漫的事～💞",
-    "每天都要有小小幸福🫶",
-    "这一年也要认真发光呀💎"
+  const messages=[
+    "轩轩～生日快乐！🥳","又长大一岁啦，越来越帅了！","希望你的笑容永远灿烂🌞",
+    "蛋糕一定要吃，愿望一定实现🎂","未来一年好运爆棚✨","生活要甜，心情要亮💫",
+    "今天的你最闪亮！⭐","所有的好运都奔向你🐾","新的一岁，要开心要闪耀！🌟",
+    "愿你温柔又有力量💪","想送你整片星空✨","这世界因为你变得更可爱💖",
+    "别忘了我一直在给你加油📣","被喜欢的人喜欢，是最浪漫的事～💞",
+    "每天都要有小小幸福🫶","这一年也要认真发光呀💎"
   ];
-
-  const colors = [
-    "rgba(255,255,255,0.9)",
-    "rgba(51,209,255,0.9)",
-    "rgba(255,168,255,0.9)",
-    "rgba(122,255,194,0.9)",
-    "rgba(255,240,180,0.9)"
+  const colors=[
+    "rgba(255,255,255,0.9)","rgba(51,209,255,0.9)","rgba(255,168,255,0.9)",
+    "rgba(122,255,194,0.9)","rgba(255,240,180,0.9)"
   ];
-
   function createPopup(text){
     const msg=document.createElement('div');
     msg.className='popup-message';
@@ -230,17 +214,77 @@ function startPopups(){
       msg.style.opacity='0';
       msg.style.transform='translate(-50%,-50%) scale(1.3)';
       setTimeout(()=>msg.remove(),800);
-    }, 2500 + Math.random()*1000);
+    },2500+Math.random()*1000);
+  }
+  function loop(){
+    createPopup(messages[Math.floor(Math.random()*messages.length)]);
+    setTimeout(loop,Math.random()*200);
+  }
+  loop();
+}
+
+// 🎆 烟花特效
+function startFireworks(){
+  resizeCanvas();
+  window.addEventListener('resize',resizeCanvas);
+  let particles=[];
+
+  function resizeCanvas(){
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
   }
 
-  function randomPopupLoop(){
-    const text = messages[Math.floor(Math.random()*messages.length)];
-    createPopup(text);
-    const next = Math.random() * 200; // ⚡更快，0~0.2秒间隔
-    setTimeout(randomPopupLoop, next);
+  class Particle{
+    constructor(x,y,color,angle,speed){
+      this.x=x;this.y=y;this.color=color;
+      this.vx=Math.cos(angle)*speed;
+      this.vy=Math.sin(angle)*speed;
+      this.alpha=1;this.life=0;
+    }
+    update(){
+      this.x+=this.vx;
+      this.y+=this.vy;
+      this.vy+=0.02;
+      this.alpha-=0.01;
+      this.life++;
+    }
+    draw(){
+      ctx.globalAlpha=this.alpha;
+      ctx.fillStyle=this.color;
+      ctx.beginPath();
+      ctx.arc(this.x,this.y,2,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+    }
   }
 
-  randomPopupLoop();
+  function spawnFirework(){
+    const x=Math.random()*canvas.width;
+    const y=Math.random()*canvas.height*0.5;
+    const colors=["#33d1ff","#7affc2","#ffd180","#ff99e5","#ffffff"];
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const count=80+Math.random()*40;
+    for(let i=0;i<count;i++){
+      const angle=(Math.PI*2/count)*i;
+      const speed=1+Math.random()*4;
+      particles.push(new Particle(x,y,color,angle,speed));
+    }
+  }
+
+  function animate(){
+    ctx.fillStyle="rgba(11,18,32,0.2)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    particles.forEach((p,i)=>{
+      p.update();
+      p.draw();
+      if(p.alpha<=0)p.life=999;
+    });
+    particles=particles.filter(p=>p.life<999);
+    requestAnimationFrame(animate);
+  }
+
+  setInterval(spawnFirework,800);
+  animate();
 }
 </script>
 </body>
