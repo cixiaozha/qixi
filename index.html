@@ -108,23 +108,6 @@
     z-index:4;
     pointer-events:none;
   }
-
-  /* 提示点击播放音乐 */
-  .tap-tip {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 16px;
-    font-size: 16px;
-    z-index: 200;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
-  .tap-tip.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -148,9 +131,8 @@
   <p>愿这一年每一天都闪闪发光 ✨</p>
 </div>
 
+<!-- ✅ 只改这里 -->
 <audio id="bgm" src="HBD.m4a" preload="auto"></audio>
-
-<div class="tap-tip" id="tapTip">🎵 点击屏幕开始庆祝！</div>
 
 <script>
 const target = new Date('2025-11-14T00:00:00');
@@ -159,7 +141,6 @@ const bgm = document.getElementById('bgm');
 const celebrationMsg = document.getElementById('celebrationMsg');
 const canvas = document.getElementById('fxCanvas');
 const ctx = canvas.getContext('2d');
-const tapTip = document.getElementById('tapTip');
 
 const daysEl=document.getElementById('days');
 const hoursEl=document.getElementById('hours');
@@ -192,16 +173,15 @@ function showCelebration(){
   ui.classList.add('fade-out');
   setTimeout(()=>{ui.style.display='none';},1000);
   celebrationMsg.classList.add('show');
-  tapTip.classList.add('show'); // 提示点击播放音乐
 
-  document.body.addEventListener('click', ()=>{
-    tapTip.remove();
-    bgm.volume=0.6;
-    bgm.loop=true;
-    bgm.play().catch(()=>{});
-    startPopups();
-    startFireworks();
-  }, { once: true });
+  // 🎵 自动播放本地音乐（HBD.m4a）
+  bgm.volume=0.6;
+  bgm.loop=true;
+  const p=bgm.play();
+  if(p!==undefined){p.catch(()=>{});}
+
+  startPopups();
+  startFireworks();
 }
 
 // ✅ 弹幕循环更密集
