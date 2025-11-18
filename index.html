@@ -2,183 +2,136 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>今日幸运能量 · 冰宝特别版</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>冰冰牌抽签</title>
 <style>
-body {
-  margin: 0;
-  font-family: "Inter", "Noto Sans SC", sans-serif;
-  background: linear-gradient(135deg, #f6f7ff, #eef3ff, #fafcff);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-/* 标题 */
-h1 {
-  font-weight: 600;
-  font-size: 26px;
-  margin-bottom: 40px;
-  color: #333;
-  letter-spacing: 1px;
-}
-
-/* 能量槽区域 */
-.energy-box {
-  width: 80%;
-  max-width: 360px;
-  height: 130px;
-  background: rgba(255,255,255,0.6);
-  backdrop-filter: blur(18px);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 8px 40px rgba(120,140,255,0.25);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-/* 能量条 */
-.energy-bar {
-  width: 100%;
-  height: 14px;
-  background: rgba(180, 190, 255, 0.25);
-  border-radius: 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.energy-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #7aa2ff, #b994ff);
-  border-radius: 10px;
-  transition: width 0.1s;
-  box-shadow: 0 0 10px rgba(130,140,255,0.8);
-}
-
-/* 滑块 */
-.slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 14px;
-  background: transparent;
-  position: absolute;
-  top: 0;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 4px 20px rgba(100,120,255,0.5);
-  border: 2px solid #a8b4ff;
-  cursor: pointer;
-}
-
-/* 显示幸运结果 */
-.result-box {
-  margin-top: 20px;
-  font-size: 20px;
-  font-weight: 500;
-  text-align: center;
-  color: #444;
-  min-height: 50px;
-  line-height: 26px;
-}
-
-/* 底部按钮 */
-.bottom-btn {
-  position: fixed;
-  bottom: 25px;
-  width: 80%;
-  max-width: 350px;
-  padding: 16px 0;
-  text-align: center;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.35);
-  backdrop-filter: blur(12px);
-  color: #333;
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 1px;
-  text-decoration: none;
-  box-shadow: 0 8px 30px rgba(120,140,255,0.35);
-}
-.bottom-btn:active {
-  transform: scale(0.97);
-}
+  body,html{margin:0;padding:0;height:100%;font-family:Inter,sans-serif;background:#0f0f1f;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;overflow:hidden;}
+  h1{margin-bottom:10px;font-weight:600;}
+  #wheel-container{position:relative;width:320px;height:320px;}
+  canvas#wheel{width:100%;height:100%;border-radius:50%;box-shadow:0 0 20px rgba(0,255,255,0.3) inset,0 0 40px rgba(0,0,0,0.5);}
+  #pointer{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:24px solid #ff33ff;z-index:2;}
+  #spin-btn{margin-top:20px;padding:12px 30px;border:none;border-radius:24px;background:linear-gradient(90deg,#33d1ff,#7affc2);color:#07101a;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,0.3);transition:transform .2s;}
+  #spin-btn:hover{transform:translateY(-3px);}
+  #result-popup{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+  #result-popup.show{opacity:1;pointer-events:auto;}
+  #result-popup .popup-content{background:#111;padding:24px 32px;border-radius:16px;text-align:center;box-shadow:0 10px 30px rgba(0,255,255,0.3);font-size:20px;color:#fff;}
+  #result-popup button{margin-top:16px;padding:10px 20px;border:none;border-radius:12px;background:#33d1ff;color:#07101a;font-weight:700;cursor:pointer;}
+  #enter-story{position:fixed;bottom:24px;padding:14px 32px;border:none;border-radius:24px;background:linear-gradient(90deg,#33d1ff,#7affc2);color:#07101a;font-weight:700;text-decoration:none;}
 </style>
 </head>
-
 <body>
 
-<h1>今日幸运能量充电中 ⚡</h1>
+<h1>今日科技抽签</h1>
+<div id="wheel-container">
+  <canvas id="wheel" width="320" height="320"></canvas>
+  <div id="pointer"></div>
+</div>
+<button id="spin-btn">点击抽签</button>
 
-<div class="energy-box">
-  <div class="energy-bar">
-    <div class="energy-fill" id="fill"></div>
-    <input type="range" min="0" max="100" value="0" class="slider" id="slider">
+<div id="result-popup">
+  <div class="popup-content">
+    <div id="result-text"></div>
+    <button id="close-popup">好的</button>
   </div>
 </div>
 
-<div class="result-box" id="result"></div>
-
-<a class="bottom-btn" href="story.html">进入故事册 →</a>
+<a href="story.html" id="enter-story">进入故事册</a>
 
 <script>
-// 随机状态库（你可随时让我继续扩充）
-const luckSets = {
-  low: [
-    "今天是温柔积蓄日，保持轻松，会有小确幸悄悄靠近。",
-    "慢慢来没关系，宇宙正在替你铺路。",
-    "适合静静放松，感受自己正在恢复能量 🌙"
-  ],
-  mid: [
-    "今天你有不动声色的好运，稍微主动就会很顺利 ✨",
-    "你状态稳定，只要迈一步，惊喜就会来找你！",
-    "适合完成小目标，会有成就感奖励你。"
-  ],
-  high: [
-    "你今天是宇宙 VIP！事情会顺得离谱 ✦",
-    "你今天会被好运点名！大胆一点！",
-    "你是今天的发光体，连路过的风都带着偏爱 💫"
-  ],
-  max: [
-    "满能量爆闪！今天是你的高光时刻✦",
-    "幸运突破天花板！所见即所得 ✨",
-    "100%神宠日：宇宙今天只宠你一个 ❤️"
-  ]
-};
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+const spinBtn = document.getElementById('spin-btn');
+const popup = document.getElementById('result-popup');
+const resultText = document.getElementById('result-text');
+const closePopup = document.getElementById('close-popup');
+let angle = 0, spinning = false;
 
-const slider = document.getElementById("slider");
-const fill = document.getElementById("fill");
-const result = document.getElementById("result");
+// 签语库
+const goodSigns = [
+  "今天你会很顺利", "会有意外的小惊喜", "今天适合做计划", "有人会帮你解决麻烦", "小小努力会有大收获",
+  "会遇到让你开心的人", "今天适合主动联系朋友", "心情比昨天更好", "意想不到的好运气", "你做的决定很对",
+  "会收到一条暖心消息", "适合尝试新东西", "小幸运会发生", "顺利完成任务", "遇到喜欢的事情",
+  "心里想的事有机会实现", "身边有温暖的人", "适合表达感受", "会有人夸你", "轻松愉快的一天",
+  "适合出门，容易遇好事", "做的事有人欣赏", "心情轻松", "遇到有趣的瞬间", "适合收集小确幸",
+  "有人帮你解决小问题", "适合计划未来", "事情比预期顺利", "认真去做喜欢的事", "收到鼓励或夸奖",
+  "做决定会顺利", "小幸运出现", "心情轻松自在", "遇到有趣的小事情", "今天会很开心"
+];
+const normalSigns = [
+  "事情不会太顺也不会太乱", "有些小麻烦但能解决", "适合慢慢做事", "事情需要耐心", "平平，但不坏",
+  "有小挫折但容易过去", "事情慢一点但有结果", "需要多留心", "小波折不影响心情", "适合整理思绪"
+];
+const badSigns = [
+  "今天可能遇到小烦恼，不用太在意", "事情会慢一点，要耐心", "有人情绪不佳，需要你理解",
+  "别太着急，稳住节奏", "有小误会，及时沟通能解决"
+];
 
-slider.addEventListener("input", () => {
-  fill.style.width = slider.value + "%";
+// 合并签语
+const allSigns = [...goodSigns, ...normalSigns, ...badSigns];
+
+// 转盘绘制
+function drawWheel(){
+  const segments = allSigns.length;
+  const anglePer = (2*Math.PI)/segments;
+  for(let i=0;i<segments;i++){
+    const start = i*anglePer + angle;
+    const end = start + anglePer;
+    const grad = ctx.createLinearGradient(160 + Math.cos(start)*160,160 + Math.sin(start)*160, 160 + Math.cos(end)*160,160 + Math.sin(end)*160);
+    grad.addColorStop(0, `hsl(${i*7},60%,50%)`);
+    grad.addColorStop(1, `hsl(${i*7+20},70%,55%)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(160,160);
+    ctx.arc(160,160,160,start,end);
+    ctx.closePath();
+    ctx.fill();
+    // text
+    ctx.save();
+    ctx.translate(160,160);
+    ctx.rotate(start + anglePer/2);
+    ctx.fillStyle = "#fff";
+    ctx.font = "12px Arial";
+    ctx.textAlign="right";
+    ctx.fillText(allSigns[i],150,0);
+    ctx.restore();
+  }
+}
+drawWheel();
+
+// 点击抽签
+spinBtn.addEventListener('click', ()=>{
+  if(spinning) return;
+  spinning=true;
+  let spinTime = 4000 + Math.random()*2000;
+  let start = null;
+  const startAngle = angle;
+  const totalRotation = 10*Math.PI + Math.random()*Math.PI*2;
+  function rotate(timestamp){
+    if(!start) start=timestamp;
+    const elapsed = timestamp-start;
+    const t = Math.min(elapsed/spinTime,1);
+    // ease out cubic
+    angle = startAngle + totalRotation*(1 - Math.pow(1-t,3));
+    ctx.clearRect(0,0,320,320);
+    drawWheel();
+    if(t<1) requestAnimationFrame(rotate);
+    else{
+      spinning=false;
+      showResult();
+    }
+  }
+  requestAnimationFrame(rotate);
 });
 
-// 松手时给出今日运势
-slider.addEventListener("change", () => {
-  const v = slider.value;
-  let pool;
+// 显示签语
+function showResult(){
+  const normalized = (angle%(2*Math.PI))/(2*Math.PI);
+  const index = allSigns.length - 1 - Math.floor(normalized*allSigns.length);
+  resultText.textContent = allSigns[index];
+  popup.classList.add('show');
+}
 
-  if (v < 30) pool = luckSets.low;
-  else if (v < 70) pool = luckSets.mid;
-  else if (v < 100) pool = luckSets.high;
-  else pool = luckSets.max;
-
-  const msg = pool[Math.floor(Math.random() * pool.length)];
-
-  result.innerHTML = msg;
-});
+// 关闭弹窗
+closePopup.addEventListener('click', ()=> popup.classList.remove('show'));
 </script>
 
 </body>
