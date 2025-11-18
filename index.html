@@ -16,6 +16,7 @@
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
+    z-index: 1;
   }
   #instructions {
     position: absolute;
@@ -25,6 +26,7 @@
     font-size: 18px;
     color: #fffacd;
     text-shadow: 0 0 10px #000;
+    z-index: 2;
   }
   #fortuneBox {
     position: absolute;
@@ -41,6 +43,12 @@
     display: none;
     text-shadow: 0 0 5px #000;
     box-shadow: 0 0 20px #88f;
+    z-index: 2;
+    animation: glow 2s infinite alternate;
+  }
+  @keyframes glow {
+    from { box-shadow: 0 0 10px #88f; }
+    to { box-shadow: 0 0 20px #88f, 0 0 30px #88f; }
   }
   #storyBtn {
     position: absolute;
@@ -56,9 +64,25 @@
     color: #fff;
     cursor: pointer;
     transition: all 0.3s;
+    z-index: 2;
   }
   #storyBtn:hover {
     background: rgba(255,255,255,0.4);
+    transform: translateX(-50%) scale(1.05);
+  }
+  .star-effect {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .constellation-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
   }
 </style>
 </head>
@@ -76,6 +100,9 @@ canvas.height = window.innerHeight;
 
 let stars = [];
 let maxStars = 5;
+let particles = [];
+let meteors = [];
+let constellationGlow = { active: false, radius: 0, alpha: 0 };
 
 const fortunes = [
   "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
@@ -90,6 +117,88 @@ const fortunes = [
   "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
 ];
 
+// 流星类
+class Meteor {
+  constructor() {
+    this.reset();
+  }
+  
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = -20;
+    this.speed = 2 + Math.random() * 3;
+    this.length = 20 + Math.random() * 50;
+    this.angle = Math.PI / 4 + (Math.random() * Math.PI / 8);
+    this.active = true;
+    this.alpha = 0.7 + Math.random() * 0.3;
+    this.trail = [];
+  }
+  
+  update() {
+    if (!this.active) return;
+    
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+    
+    // 记录轨迹
+    this.trail.push({x: this.x, y: this.y});
+    if (this.trail.length > this.length) {
+      this.trail.shift();
+    }
+    
+    // 检查是否超出屏幕
+    if (this.x > canvas.width || this.y > canvas.height) {
+      this.active = false;
+    }
+  }
+  
+  draw() {
+    if (!this.active) return;
+    
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "white";
+    
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x - Math.cos(this.angle) * this.length, 
+               this.y - Math.sin(this.angle) * this.length);
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+}
+
+// 粒子类
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = Math.random() * 3 + 1;
+    this.speedX = Math.random() * 2 - 1;
+    this.speedY = Math.random() * 2 - 1;
+    this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+    this.life = 30;
+  }
+  
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.life--;
+  }
+  
+  draw() {
+    ctx.save();
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 class Star {
   constructor(x,y){
     this.x = x;
@@ -97,20 +206,48 @@ class Star {
     this.radius = 0;
     this.targetRadius = 6;
     this.brightness = 0;
+    this.pulse = 0;
+    this.pulseDirection = 1;
   }
+  
   draw(){
     ctx.save();
     ctx.beginPath();
-    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.arc(this.x, this.y, this.radius + this.pulse, 0, Math.PI*2);
     ctx.fillStyle = `rgba(255,255,180,${this.brightness})`;
     ctx.shadowColor = '#fff';
     ctx.shadowBlur = 15;
     ctx.fill();
+    
+    // 添加星光效果
+    if (this.brightness > 0.5) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI*2);
+      const gradient = ctx.createRadialGradient(
+        this.x, this.y, this.radius,
+        this.x, this.y, this.radius * 2
+      );
+      gradient.addColorStop(0, `rgba(255, 255, 200, ${this.brightness * 0.5})`);
+      gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+    
     ctx.restore();
   }
+  
   update(){
-    if(this.radius<this.targetRadius) this.radius += 0.3;
-    if(this.brightness<1) this.brightness += 0.05;
+    if(this.radius < this.targetRadius) this.radius += 0.3;
+    if(this.brightness < 1) this.brightness += 0.05;
+    
+    // 脉动效果
+    if (this.brightness > 0.8) {
+      this.pulse += 0.05 * this.pulseDirection;
+      if (this.pulse > 1 || this.pulse < 0) {
+        this.pulseDirection *= -1;
+      }
+    }
+    
     this.draw();
   }
 }
@@ -119,11 +256,29 @@ function connectStars(){
   ctx.beginPath();
   ctx.strokeStyle = 'rgba(180,220,255,0.7)';
   ctx.lineWidth = 2;
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = "rgba(180,220,255,0.7)";
   for(let i=0;i<stars.length-1;i++){
     ctx.moveTo(stars[i].x,stars[i].y);
     ctx.lineTo(stars[i+1].x,stars[i+1].y);
   }
   ctx.stroke();
+  
+  // 在线条上添加粒子
+  if (stars.length > 1) {
+    for (let i = 0; i < stars.length - 1; i++) {
+      const start = stars[i];
+      const end = stars[i+1];
+      
+      // 偶尔在线条上添加粒子
+      if (Math.random() < 0.1) {
+        const progress = Math.random();
+        const x = start.x + (end.x - start.x) * progress;
+        const y = start.y + (end.y - start.y) * progress;
+        particles.push(new Particle(x, y));
+      }
+    }
+  }
 }
 
 function highlightConstellation(){
@@ -131,12 +286,91 @@ function highlightConstellation(){
     s.brightness = 1;
     s.radius = s.targetRadius + 3;
   });
+  
+  // 激活星座发光效果
+  constellationGlow.active = true;
+  constellationGlow.radius = 0;
+  constellationGlow.alpha = 0.5;
+  
+  // 在星星周围创建粒子爆发
+  stars.forEach(star => {
+    for (let i = 0; i < 10; i++) {
+      particles.push(new Particle(star.x, star.y));
+    }
+  });
 }
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  
+  // 绘制背景流星
+  meteors.forEach(meteor => {
+    meteor.update();
+    meteor.draw();
+    if (!meteor.active) {
+      meteor.reset();
+    }
+  });
+  
+  // 绘制星座发光效果
+  if (constellationGlow.active) {
+    ctx.save();
+    ctx.beginPath();
+    
+    // 计算星座中心点
+    let centerX = 0, centerY = 0;
+    stars.forEach(star => {
+      centerX += star.x;
+      centerY += star.y;
+    });
+    centerX /= stars.length;
+    centerY /= stars.length;
+    
+    // 计算最大半径
+    let maxDistance = 0;
+    stars.forEach(star => {
+      const distance = Math.sqrt(
+        Math.pow(star.x - centerX, 2) + Math.pow(star.y - centerY, 2)
+      );
+      if (distance > maxDistance) maxDistance = distance;
+    });
+    
+    // 绘制发光效果
+    const gradient = ctx.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, maxDistance + constellationGlow.radius
+    );
+    gradient.addColorStop(0, `rgba(100, 150, 255, ${constellationGlow.alpha})`);
+    gradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.arc(centerX, centerY, maxDistance + constellationGlow.radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 更新发光效果
+    constellationGlow.radius += 2;
+    constellationGlow.alpha -= 0.02;
+    
+    if (constellationGlow.alpha <= 0) {
+      constellationGlow.active = false;
+    }
+    
+    ctx.restore();
+  }
+  
+  // 绘制星星和连线
   stars.forEach(s=>s.update());
   if(stars.length>1) connectStars();
+  
+  // 绘制和更新粒子
+  particles.forEach((particle, index) => {
+    particle.update();
+    particle.draw();
+    if (particle.life <= 0) {
+      particles.splice(index, 1);
+    }
+  });
+  
   requestAnimationFrame(draw);
 }
 
@@ -157,10 +391,26 @@ function showFortune(){
   const box = document.getElementById('fortuneBox');
   box.innerText = f;
   box.style.display = 'block';
+  
+  // 添加显示动画
+  box.style.opacity = 0;
+  box.style.transform = 'translateX(-50%) translateY(20px)';
+  setTimeout(() => {
+    box.style.transition = 'opacity 0.5s, transform 0.5s';
+    box.style.opacity = 1;
+    box.style.transform = 'translateX(-50%) translateY(0)';
+  }, 100);
+}
+
+// 初始化流星
+for (let i = 0; i < 5; i++) {
+  meteors.push(new Meteor());
 }
 
 document.getElementById('storyBtn').addEventListener('click',()=>{
-  window.location.href = "story.html";
+  // 这里可以改为实际的故事页面链接
+  alert("这里将跳转到故事册页面");
+  // window.location.href = "story.html";
 });
 
 window.addEventListener('resize',()=>{
