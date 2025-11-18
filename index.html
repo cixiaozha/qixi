@@ -1,329 +1,176 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>轩轩生日倒计时</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流星许愿今日签</title>
 <style>
-  :root {
-    --bg1: #0b1220;
-    --accent: #33d1ff;
-    --accent2: #7affc2;
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Microsoft YaHei', sans-serif;
+    background: radial-gradient(ellipse at top, #0b0c2c 0%, #1b1f4d 100%);
   }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{
-    height:100%;
-    font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
-    overflow:hidden;
+  #canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
   }
-  body{
-    background: radial-gradient(circle at 20% 20%, rgba(40,80,120,0.3), transparent),
-                linear-gradient(180deg, var(--bg1) 0%, #07101a 100%);
-    color:#cfeeff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+  #instructions {
+    position: absolute;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 18px;
+    color: #fffacd;
+    text-shadow: 0 0 10px #000;
   }
-
-  #fxCanvas{
-    position:fixed;
-    inset:0;
-    z-index:1;
-    pointer-events:none;
+  #fortuneBox {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80') no-repeat center center;
+    background-size: cover;
+    padding: 25px 35px;
+    border-radius: 15px;
+    font-size: 20px;
+    text-align: center;
+    color: #fff;
+    display: none;
+    text-shadow: 0 0 5px #000;
+    box-shadow: 0 0 20px #88f;
   }
-
-  .ui{
-    position:relative;
-    z-index:2;
-    text-align:center;
-    padding:28px;
-    border-radius:16px;
-    background:rgba(255,255,255,0.05);
-    box-shadow:0 0 30px rgba(0,0,0,0.4);
-    backdrop-filter:blur(8px);
-    transition:opacity 1s ease,transform 1s ease;
+  #storyBtn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 15px 35px;
+    border-radius: 25px;
+    font-size: 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
   }
-  .fade-out{
-    opacity:0;
-    transform:scale(0.9);
-    pointer-events:none;
+  #storyBtn:hover {
+    background: rgba(255,255,255,0.4);
   }
-
-  h1{margin-bottom:12px;font-size:28px;color:#dff9ff;}
-  .lead{color:#aeeaff;margin-bottom:22px;font-size:14px;}
-  .countdown{display:flex;gap:16px;justify-content:center;margin-bottom:20px;}
-  .cell{min-width:80px;padding:10px 0;border-radius:10px;background:rgba(255,255,255,0.05);}
-  .num{font-size:30px;font-weight:700;}
-  .label{font-size:12px;color:rgba(255,255,255,0.7);}
-
-  .enter-btn{
-    position:fixed;
-    bottom:24px;
-    right:24px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    color:#07101a;
-    border-radius:999px;
-    padding:12px 24px;
-    font-weight:600;
-    text-decoration:none;
-    z-index:100;
-    box-shadow:0 0 12px rgba(122,255,194,0.4);
-    transition:transform .2s;
-  }
-  .enter-btn:hover{transform:translateY(-3px);}
-
-  .celebration-msg{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%) scale(.9);
-    opacity:0;
-    z-index:5;
-    text-align:center;
-    color:#fff;
-    transition:opacity 1s ease, transform .6s ease;
-  }
-  .celebration-msg.show{
-    opacity:1;
-    transform:translate(-50%,-50%) scale(1);
-  }
-  .celebration-msg h2{font-size:44px;margin-bottom:12px;}
-  .celebration-msg p{font-size:18px;opacity:0.9;}
-
-  .popup-message{
-    position:fixed;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%) scale(0.8);
-    background:rgba(255,255,255,0.08);
-    backdrop-filter:blur(6px);
-    padding:12px 20px;
-    border-radius:12px;
-    color:#fff;
-    font-size:18px;
-    font-weight:600;
-    opacity:0;
-    box-shadow:0 0 20px rgba(51,209,255,0.3);
-    transition:all 0.8s ease;
-    z-index:4;
-    pointer-events:none;
-  }
-
-  /* 提前出现的准备按钮 */
-  .prepare-btn{
-    position:fixed;
-    top:60%;
-    left:50%;
-    transform:translateX(-50%);
-    background:linear-gradient(90deg,#33d1ff,#7affc2);
-    color:#07101a;
-    padding:12px 22px;
-    border:none;
-    border-radius:999px;
-    font-weight:600;
-    z-index:10;
-    cursor:pointer;
-    font-size:16px;
-    box-shadow:0 0 16px rgba(122,255,194,0.4);
-    opacity:0;
-    transition:opacity .6s ease;
-  }
-  .prepare-btn.show{opacity:1;}
 </style>
 </head>
 <body>
-<canvas id="fxCanvas"></canvas>
-
-<div class="ui" id="ui">
-  <h1>距离轩轩生日还有</h1>
-  <p class="lead">科技时钟正在读秒… 准备好惊喜了吗？</p>
-  <div class="countdown" id="countdown">
-    <div class="cell"><div class="num" id="days">0</div><div class="label">天</div></div>
-    <div class="cell"><div class="num" id="hours">00</div><div class="label">小时</div></div>
-    <div class="cell"><div class="num" id="minutes">00</div><div class="label">分钟</div></div>
-    <div class="cell"><div class="num" id="seconds">00</div><div class="label">秒</div></div>
-  </div>
-</div>
-
-<a class="enter-btn" href="story.html">进入我们的故事册</a>
-
-<div class="celebration-msg" id="celebrationMsg">
-  <h2>🎉 轩轩生日快乐！</h2>
-  <p>愿这一年每一天都闪闪发光 ✨</p>
-</div>
-
-<button id="prepareBtn" class="prepare-btn">🎵 点我准备好惊喜！</button>
-
-<audio id="bgm" src="HBD.m4a" preload="auto"></audio>
+<div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
+<canvas id="canvas"></canvas>
+<div id="fortuneBox"></div>
+<button id="storyBtn">进入故事册</button>
 
 <script>
-const target = new Date('2025-11-14T00:00:00');
-const ui = document.getElementById('ui');
-const bgm = document.getElementById('bgm');
-const celebrationMsg = document.getElementById('celebrationMsg');
-const prepareBtn = document.getElementById('prepareBtn');
-const canvas = document.getElementById('fxCanvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-const daysEl=document.getElementById('days');
-const hoursEl=document.getElementById('hours');
-const minutesEl=document.getElementById('minutes');
-const secondsEl=document.getElementById('seconds');
-let allowPlay=false;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-function pad(n){return n.toString().padStart(2,'0');}
-let timer=setInterval(updateCountdown,1000);
-updateCountdown();
+let stars = [];
+let maxStars = 5;
 
-function updateCountdown(){
-  const now=new Date();
-  let diff=target-now;
-  if(diff<=0){
-    clearInterval(timer);
-    showCelebration();
-    return;
+const fortunes = [
+  // 好签 40条
+  "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
+  "遇到好吃的美食", "心想事成的一天", "会收到小礼物", "幸运数字会出现", "适合出行",
+  "有人欣赏你的努力", "财运不错，钱包轻松", "遇到有趣的人", "心情轻松愉快", "容易得到称赞",
+  "有意外收获", "今天适合尝试新事物", "爱情小幸运", "精神状态极佳", "适合创作和动手",
+  "容易交到朋友", "会遇到有趣的对话", "财务状况平稳", "好心情持续一整天", "小愿望实现",
+  "今天适合整理计划", "有机会获得认可", "旅行心情愉快", "学习效率高", "人际顺利",
+  "被夸奖的机会多", "适合表达自己", "小惊喜连连", "尝试新技能顺利", "健康状况良好",
+  "心态积极", "工作进展顺利", "容易被人理解", "生活小确幸", "灵感频繁出现",
+  // 坏签 10条
+  "小心容易遗忘重要事情", "注意身体疲劳", "有点小波折，不要着急", "小误会可能发生", "财务小损失",
+  "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
+];
+
+class Star {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.targetRadius = 6;
+    this.brightness = 0;
   }
-
-  const d=Math.floor(diff/(1000*60*60*24));
-  const h=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-  const m=Math.floor((diff%(1000*60*60))/(1000*60));
-  const s=Math.floor((diff%(1000*60))/1000);
-
-  daysEl.textContent=d;
-  hoursEl.textContent=pad(h);
-  minutesEl.textContent=pad(m);
-  secondsEl.textContent=pad(s);
-
-  // ⏰ 在15秒时显示准备按钮
-  if(diff <= 15000 && !prepareBtn.classList.contains('show')){
-    prepareBtn.classList.add('show');
+  draw(){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,180,${this.brightness})`;
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.restore();
+  }
+  update(){
+    if(this.radius<this.targetRadius) this.radius += 0.3;
+    if(this.brightness<1) this.brightness += 0.05;
+    this.draw();
   }
 }
 
-prepareBtn.addEventListener('click', ()=>{
-  allowPlay=true;
-  prepareBtn.textContent='🎶 已准备就绪！';
-  prepareBtn.disabled=true;
-  prepareBtn.style.opacity='0.6';
+function connectStars(){
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(180,220,255,0.7)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<stars.length-1;i++){
+    ctx.moveTo(stars[i].x,stars[i].y);
+    ctx.lineTo(stars[i+1].x,stars[i+1].y);
+  }
+  ctx.stroke();
+}
+
+function highlightConstellation(){
+  stars.forEach(s=>{
+    s.brightness = 1;
+    s.radius = s.targetRadius + 3;
+  });
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>s.update());
+  if(stars.length>1) connectStars();
+  requestAnimationFrame(draw);
+}
+
+canvas.addEventListener('click', e=>{
+  if(stars.length >= maxStars) return;
+  let star = new Star(e.clientX, e.clientY);
+  stars.push(star);
+  if(stars.length === maxStars){
+    highlightConstellation(); // 星座强调效果
+    showFortune();
+  }
 });
 
-function showCelebration(){
-  ui.classList.add('fade-out');
-  setTimeout(()=>{ui.style.display='none';},1000);
-  celebrationMsg.classList.add('show');
-  prepareBtn.remove();
-
-  if(allowPlay){
-    bgm.volume=0.6;
-    bgm.loop=true;
-    bgm.play().catch(()=>{});
-  }
-
-  startPopups();
-  startFireworks();
+function showFortune(){
+  let isGood = Math.random()<0.8;
+  let filtered = fortunes.filter(f=> isGood ? fortunes.indexOf(f)<40 : fortunes.indexOf(f)>=40);
+  let f = filtered[Math.floor(Math.random()*filtered.length)];
+  const box = document.getElementById('fortuneBox');
+  box.innerText = f;
+  box.style.display = 'block';
 }
 
-// ✅ 弹幕快速多发
-function startPopups(){
-  const messages=[
-    "轩轩～生日快乐！🥳","又长大一岁啦，越来越帅了！","希望你的笑容永远灿烂🌞",
-    "蛋糕一定要吃，愿望一定实现🎂","未来一年好运爆棚✨","生活要甜，心情要亮💫",
-    "今天的你最闪亮！⭐","所有的好运都奔向你🐾","新的一岁，要开心要闪耀！🌟",
-    "愿你温柔又有力量💪","想送你整片星空✨","这世界因为你变得更可爱💖",
-    "别忘了我一直在给你加油📣","被喜欢的人喜欢，是最浪漫的事～💞",
-    "每天都要有小小幸福🫶","这一年也要认真发光呀💎"
-  ];
-  const colors=[
-    "rgba(255,255,255,0.9)","rgba(51,209,255,0.9)","rgba(255,168,255,0.9)",
-    "rgba(122,255,194,0.9)","rgba(255,240,180,0.9)"
-  ];
-  function createPopup(text){
-    const msg=document.createElement('div');
-    msg.className='popup-message';
-    msg.textContent=text;
-    msg.style.color=colors[Math.floor(Math.random()*colors.length)];
-    msg.style.left=(5+Math.random()*90)+'%';
-    msg.style.top=(10+Math.random()*75)+'%';
-    msg.style.transform=`translate(-50%,-50%) scale(${0.7+Math.random()*0.5})`;
-    document.body.appendChild(msg);
-    requestAnimationFrame(()=>{
-      msg.style.opacity='1';
-      msg.style.transform='translate(-50%,-50%) scale(1)';
-    });
-    setTimeout(()=>{
-      msg.style.opacity='0';
-      msg.style.transform='translate(-50%,-50%) scale(1.3)';
-      setTimeout(()=>msg.remove(),800);
-    },2500+Math.random()*1000);
-  }
-  function loop(){
-    createPopup(messages[Math.floor(Math.random()*messages.length)]);
-    setTimeout(loop,Math.random()*150); // 更快频率
-  }
-  loop();
-}
+document.getElementById('storyBtn').addEventListener('click',()=>{
+  window.location.href = "story.html";
+});
 
-// 🎆 烟花
-function startFireworks(){
-  resizeCanvas();
-  window.addEventListener('resize',resizeCanvas);
-  let particles=[];
+window.addEventListener('resize',()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 
-  function resizeCanvas(){
-    canvas.width=window.innerWidth;
-    canvas.height=window.innerHeight;
-  }
-
-  class Particle{
-    constructor(x,y,color,angle,speed){
-      this.x=x;this.y=y;this.color=color;
-      this.vx=Math.cos(angle)*speed;
-      this.vy=Math.sin(angle)*speed;
-      this.alpha=1;this.life=0;
-    }
-    update(){
-      this.x+=this.vx;
-      this.y+=this.vy;
-      this.vy+=0.02;
-      this.alpha-=0.01;
-      this.life++;
-    }
-    draw(){
-      ctx.globalAlpha=this.alpha;
-      ctx.fillStyle=this.color;
-      ctx.beginPath();
-      ctx.arc(this.x,this.y,2,0,Math.PI*2);
-      ctx.fill();
-      ctx.globalAlpha=1;
-    }
-  }
-
-  function spawnFirework(){
-    const x=Math.random()*canvas.width;
-    const y=Math.random()*canvas.height*0.5;
-    const colors=["#33d1ff","#7affc2","#ffd180","#ff99e5","#ffffff"];
-    const color=colors[Math.floor(Math.random()*colors.length)];
-    const count=80+Math.random()*40;
-    for(let i=0;i<count;i++){
-      const angle=(Math.PI*2/count)*i;
-      const speed=1+Math.random()*4;
-      particles.push(new Particle(x,y,color,angle,speed));
-    }
-  }
-
-  function animate(){
-    ctx.fillStyle="rgba(11,18,32,0.2)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    particles.forEach((p)=>{
-      p.update();
-      p.draw();
-    });
-    particles=particles.filter(p=>p.alpha>0);
-    requestAnimationFrame(animate);
-  }
-
-  setInterval(spawnFirework,800);
-  animate();
-}
+draw();
 </script>
 </body>
 </html>
