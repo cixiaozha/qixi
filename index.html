@@ -3,57 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>流星许愿</title>
+<title>流星许愿今日签</title>
 <style>
   html, body {
     margin: 0;
-    padding: 0;
+    height: 100%;
     overflow: hidden;
-    height: 100%;
-    background: radial-gradient(ellipse at bottom, #0b0c2b 0%, #050618 100%);
-    font-family: "Arial", sans-serif;
+    font-family: 'Microsoft YaHei', sans-serif;
+    background: radial-gradient(ellipse at top, #0b0c2c 0%, #1b1f4d 100%);
   }
-  canvas {
+  #canvas {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
   }
-  #starsContainer {
+  #instructions {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 20px;
     width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-  #signatureModal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px;
-    padding: 20px;
-    background: url('https://i.imgur.com/3r5G1Mf.png') no-repeat center/cover;
-    color: white;
     text-align: center;
-    border-radius: 15px;
-    display: none;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    font-size: 18px;
+    color: #fffacd;
+    text-shadow: 0 0 10px #000;
   }
-  #storyBtn {
-    position: fixed;
-    bottom: 30px;
+  #fortuneBox {
+    position: absolute;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 15px 40px;
+    background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80') no-repeat center center;
+    background-size: cover;
+    padding: 25px 35px;
+    border-radius: 15px;
+    font-size: 20px;
+    text-align: center;
+    color: #fff;
+    display: none;
+    text-shadow: 0 0 5px #000;
+    box-shadow: 0 0 20px #88f;
+  }
+  #storyBtn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(255,255,255,0.2);
     backdrop-filter: blur(10px);
-    border-radius: 25px;
-    color: white;
-    font-size: 18px;
-    cursor: pointer;
     border: none;
-    transition: 0.3s;
+    padding: 15px 35px;
+    border-radius: 25px;
+    font-size: 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
   }
   #storyBtn:hover {
     background: rgba(255,255,255,0.4);
@@ -61,124 +63,114 @@
 </style>
 </head>
 <body>
-
-<canvas id="meteorCanvas"></canvas>
-<canvas id="starCanvas"></canvas>
-
-<div id="signatureModal"></div>
+<div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
+<canvas id="canvas"></canvas>
+<div id="fortuneBox"></div>
 <button id="storyBtn">进入故事册</button>
 
 <script>
-const canvas = document.getElementById('meteorCanvas');
+const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const starCanvas = document.getElementById('starCanvas');
-const sctx = starCanvas.getContext('2d');
-starCanvas.width = window.innerWidth;
-starCanvas.height = window.innerHeight;
+let stars = [];
+let maxStars = 5;
 
-const stars = [];
-const maxStars = 5;
-let clickedStars = [];
-
-const goodSigns = [
-  "今天会遇到好事", "心情特别棒", "工作顺利", "有惊喜收获", "人际关系良好",
-  "财运不错", "会被夸奖", "遇到有趣的人", "精神满满", "生活愉快"
+const fortunes = [
+  // 好签 40条
+  "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
+  "遇到好吃的美食", "心想事成的一天", "会收到小礼物", "幸运数字会出现", "适合出行",
+  "有人欣赏你的努力", "财运不错，钱包轻松", "遇到有趣的人", "心情轻松愉快", "容易得到称赞",
+  "有意外收获", "今天适合尝试新事物", "爱情小幸运", "精神状态极佳", "适合创作和动手",
+  "容易交到朋友", "会遇到有趣的对话", "财务状况平稳", "好心情持续一整天", "小愿望实现",
+  "今天适合整理计划", "有机会获得认可", "旅行心情愉快", "学习效率高", "人际顺利",
+  "被夸奖的机会多", "适合表达自己", "小惊喜连连", "尝试新技能顺利", "健康状况良好",
+  "心态积极", "工作进展顺利", "容易被人理解", "生活小确幸", "灵感频繁出现",
+  // 坏签 10条
+  "小心容易遗忘重要事情", "注意身体疲劳", "有点小波折，不要着急", "小误会可能发生", "财务小损失",
+  "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
 ];
-const badSigns = [
-  "小心交通", "注意感冒", "有小麻烦", "稍微疲惫", "别太焦虑"
-];
 
-function randomSign() {
-  if(Math.random() < 0.2) {
-    return badSigns[Math.floor(Math.random()*badSigns.length)];
-  } else {
-    return goodSigns[Math.floor(Math.random()*goodSigns.length)];
+class Star {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.targetRadius = 6;
+    this.brightness = 0;
   }
-}
-
-function createMeteor() {
-  return {
-    x: Math.random()*canvas.width,
-    y: Math.random()*canvas.height/2,
-    length: Math.random()*80 + 20,
-    speed: Math.random()*4 + 4,
-    angle: Math.random()*Math.PI/4 + Math.PI/8
-  }
-}
-
-const meteors = [];
-for(let i=0;i<30;i++) meteors.push(createMeteor());
-
-function drawMeteors() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  for(let m of meteors){
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = 2;
+  draw(){
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(m.x, m.y);
-    ctx.lineTo(m.x - m.length*Math.cos(m.angle), m.y + m.length*Math.sin(m.angle));
-    ctx.stroke();
-    m.x += m.speed*Math.cos(m.angle);
-    m.y -= m.speed*Math.sin(m.angle);
-    if(m.x > canvas.width || m.y < 0){
-      Object.assign(m, createMeteor());
-    }
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,180,${this.brightness})`;
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.restore();
   }
-  requestAnimationFrame(drawMeteors);
+  update(){
+    if(this.radius<this.targetRadius) this.radius += 0.3;
+    if(this.brightness<1) this.brightness += 0.05;
+    this.draw();
+  }
 }
-drawMeteors();
 
-// 星星点亮
-function drawStars(){
-  sctx.clearRect(0,0,starCanvas.width, starCanvas.height);
-  // 连线
-  if(clickedStars.length>1){
-    sctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    sctx.lineWidth = 1.5;
-    sctx.beginPath();
-    sctx.moveTo(clickedStars[0].x, clickedStars[0].y);
-    for(let i=1;i<clickedStars.length;i++){
-      sctx.lineTo(clickedStars[i].x, clickedStars[i].y);
-    }
-    sctx.stroke();
+function connectStars(){
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(180,220,255,0.7)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<stars.length-1;i++){
+    ctx.moveTo(stars[i].x,stars[i].y);
+    ctx.lineTo(stars[i+1].x,stars[i+1].y);
   }
-  for(let star of clickedStars){
-    sctx.fillStyle = 'yellow';
-    sctx.beginPath();
-    sctx.arc(star.x, star.y, 10, 0, Math.PI*2);
-    sctx.fill();
-  }
-  requestAnimationFrame(drawStars);
+  ctx.stroke();
 }
-drawStars();
 
-starCanvas.addEventListener('click', (e)=>{
-  if(clickedStars.length>=maxStars) return;
-  const rect = starCanvas.getBoundingClientRect();
-  clickedStars.push({x:e.clientX - rect.left, y:e.clientY - rect.top});
-  if(clickedStars.length===maxStars){
-    setTimeout(()=>{
-      const modal = document.getElementById('signatureModal');
-      modal.innerText = randomSign();
-      modal.style.display = 'block';
-    },300);
+function highlightConstellation(){
+  stars.forEach(s=>{
+    s.brightness = 1;
+    s.radius = s.targetRadius + 3;
+  });
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>s.update());
+  if(stars.length>1) connectStars();
+  requestAnimationFrame(draw);
+}
+
+canvas.addEventListener('click', e=>{
+  if(stars.length >= maxStars) return;
+  let star = new Star(e.clientX, e.clientY);
+  stars.push(star);
+  if(stars.length === maxStars){
+    highlightConstellation(); // 星座强调效果
+    showFortune();
   }
 });
 
-document.getElementById('storyBtn').addEventListener('click', ()=>{
-  window.location.href = 'story.html';
+function showFortune(){
+  let isGood = Math.random()<0.8;
+  let filtered = fortunes.filter(f=> isGood ? fortunes.indexOf(f)<40 : fortunes.indexOf(f)>=40);
+  let f = filtered[Math.floor(Math.random()*filtered.length)];
+  const box = document.getElementById('fortuneBox');
+  box.innerText = f;
+  box.style.display = 'block';
+}
+
+document.getElementById('storyBtn').addEventListener('click',()=>{
+  window.location.href = "story.html";
 });
 
-window.addEventListener('resize', ()=>{
+window.addEventListener('resize',()=>{
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  starCanvas.width = window.innerWidth;
-  starCanvas.height = window.innerHeight;
 });
-</script>
 
+draw();
+</script>
 </body>
 </html>
