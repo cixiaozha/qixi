@@ -3,174 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>流星许愿</title>
+<title>流星许愿今日签</title>
 <style>
   html, body {
     margin: 0;
-    padding: 0;
     height: 100%;
-    background: linear-gradient(135deg, #f5f5f5, #e0e0ff);
+    background: radial-gradient(ellipse at top, #0b0c2c 0%, #1b1f4d 100%);
     overflow: hidden;
-    font-family: "Segoe UI", sans-serif;
+    font-family: 'Microsoft YaHei', sans-serif;
+    color: white;
   }
-
-  #star-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .star {
+  #canvas {
     position: absolute;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #fff, #fffa);
-    box-shadow: 0 0 8px #fff;
-    opacity: 0.8;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
   }
-
-  #fortune-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(30,30,40,0.95);
-    color: #fff;
-    padding: 25px 35px;
-    border-radius: 18px;
+  #instructions {
+    position: absolute;
+    top: 20px;
+    width: 100%;
     text-align: center;
-    font-size: 1.2rem;
-    display: none;
-    max-width: 80%;
+    font-size: 18px;
+    color: #fffacd;
+    text-shadow: 0 0 10px #000;
   }
-
-  #story-btn {
-    position: fixed;
+  #fortuneBox {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,50,0.7);
+    padding: 15px 25px;
+    border-radius: 15px;
+    font-size: 18px;
+    text-align: center;
+    display: none;
+  }
+  #storyBtn {
+    position: absolute;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 18px 50px;
-    font-size: 1.1rem;
-    border-radius: 20px;
-    border: none;
-    background: rgba(100, 80, 255, 0.8);
-    color: #fff;
+    background: rgba(255,255,255,0.2);
     backdrop-filter: blur(10px);
+    border: none;
+    padding: 15px 35px;
+    border-radius: 25px;
+    font-size: 18px;
+    color: #fff;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(100,80,255,0.5);
+    transition: all 0.3s;
   }
-
-  #story-btn:hover {
-    background: rgba(120,100,255,0.9);
+  #storyBtn:hover {
+    background: rgba(255,255,255,0.4);
   }
 </style>
 </head>
 <body>
-<div id="star-container"></div>
-
-<div id="fortune-popup"></div>
-
-<button id="story-btn" onclick="location.href='#'">进入故事册</button>
+<div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
+<canvas id="canvas"></canvas>
+<div id="fortuneBox"></div>
+<button id="storyBtn">进入故事册</button>
 
 <script>
-const goodFortunes = [
-"今天会遇到小惊喜，心情不错！",
-"运气挺好，事情顺利进行。",
-"心情愉快，适合社交或聊天。",
-"事情有进展，加油！",
-"今天会遇到好机会，抓住它！",
-"收到称赞，信心满满。",
-"财运还行，可以小额投资或理财。",
-"朋友支持你，心里暖暖的。",
-"健康良好，适合运动或锻炼。",
-"今天适合尝试新事物，创意满满。",
-"爱情运势不错，适合表白或约会。",
-"工作顺利，效率高。",
-"今天心态很好，容易解决问题。",
-"学习进步，掌握新技能。",
-"遇到贵人帮忙，事情顺利。",
-"小目标达成，开心。",
-"适合整理计划，效率高。",
-"心情舒畅，适合放松或休息。",
-"收入或财富有小收获。",
-"好事连连，心想事成。",
-"今天适合旅行或户外活动。",
-"被朋友关心，幸福感提升。",
-"灵感爆发，创意点子多。",
-"今天会收到意外的好消息。",
-"小困难容易解决，心态好。",
-"情绪高涨，适合表达自己。",
-"财运稳中有升，注意理财。",
-"心情愉快，容易交到新朋友。",
-"今天适合完成计划或任务。",
-"健康状态良好，注意作息。",
-"今天适合与人合作，效率高。",
-"会遇到好机会，抓住就有收获。",
-"心态平稳，事情容易顺利。",
-"爱情运良好，关系和谐。",
-"今天容易收获小幸福。",
-"工作或学习有突破，成就感高。",
-"今天适合放松心情，享受生活。",
-"遇到喜欢的事物或人，会开心。",
-"财运不错，适合小投资或理财。",
-"小幸运不断，心情愉快。"
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let stars = [];
+let lines = [];
+let maxStars = 5;
+
+const fortunes = [
+  // 好签 40条
+  "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
+  "遇到好吃的美食", "心想事成的一天", "会收到小礼物", "幸运数字会出现", "适合出行",
+  "有人欣赏你的努力", "财运不错，钱包轻松", "遇到有趣的人", "心情轻松愉快", "容易得到称赞",
+  "有意外收获", "适合尝试新事物", "爱情小幸运", "精神状态极佳", "适合创作和动手",
+  "容易交到朋友", "会遇到有趣的对话", "财务状况平稳", "好心情持续一整天", "小愿望实现",
+  "今天适合整理计划", "有机会获得认可", "旅行心情愉快", "学习效率高", "人际顺利",
+  "被夸奖的机会多", "适合表达自己", "小惊喜连连", "尝试新技能顺利", "健康状况良好",
+  "心态积极", "工作进展顺利", "容易被人理解", "生活小确幸", "灵感频繁出现",
+  // 坏签 10条
+  "小心容易遗忘重要事情", "注意身体疲劳", "有点小波折，不要着急", "小误会可能发生", "财务小损失",
+  "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
 ];
 
-const badFortunes = [
-"今天容易遇到小麻烦，别急。",
-"注意健康，小心感冒或疲劳。",
-"财务方面有小波折，谨慎花钱。",
-"事情进展慢，耐心点。",
-"小误会容易发生，多沟通。",
-"情绪可能有点低落，别太在意。",
-"注意安全，小心小意外。",
-"今天容易忘事，提醒自己。",
-"小目标未达成，别灰心。",
-"遇到小挫折，保持耐心。"
-];
+function randomBetween(min,max){ return Math.random()*(max-min)+min; }
 
-const allFortunes = [...goodFortunes, ...badFortunes];
+class Star {
+  constructor(x,y){
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.targetRadius = 6;
+    this.brightness = 0;
+    this.connected = false;
+  }
+  draw(){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,200,${this.brightness})`;
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  }
+  update(){
+    if(this.radius<this.targetRadius) this.radius += 0.3;
+    if(this.brightness<1) this.brightness += 0.05;
+    this.draw();
+  }
+}
 
-let starCount = 0;
-const maxStars = 5;
+function connectStars(){
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(200,200,255,0.6)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<stars.length-1;i++){
+    ctx.moveTo(stars[i].x,stars[i].y);
+    ctx.lineTo(stars[i+1].x,stars[i+1].y);
+  }
+  ctx.stroke();
+}
 
-const container = document.getElementById("star-container");
-const popup = document.getElementById("fortune-popup");
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>s.update());
+  if(stars.length>1) connectStars();
+  requestAnimationFrame(draw);
+}
 
-container.addEventListener("click", (e) => {
-    if(starCount >= maxStars) return;
-
-    const star = document.createElement("div");
-    star.className = "star";
-    star.style.left = `${e.clientX - 7}px`;
-    star.style.top = `${e.clientY - 7}px`;
-    star.style.width = `${10 + Math.random()*10}px`;
-    star.style.height = star.style.width;
-    star.style.opacity = 0.5 + Math.random()*0.5;
-    container.appendChild(star);
-
-    starCount++;
-
-    if(starCount === maxStars){
-        setTimeout(showFortune, 500);
-    }
+canvas.addEventListener('click', e=>{
+  if(stars.length >= maxStars) return;
+  let star = new Star(e.clientX, e.clientY);
+  stars.push(star);
+  if(stars.length === maxStars){
+    showFortune();
+  }
 });
 
 function showFortune(){
-    // 随机抽签，但坏签概率低一点
-    let fortune;
-    const random = Math.random();
-    if(random < 0.15){ // 15% 坏签
-        fortune = badFortunes[Math.floor(Math.random() * badFortunes.length)];
-    } else {
-        fortune = goodFortunes[Math.floor(Math.random() * goodFortunes.length)];
-    }
-
-    popup.textContent = fortune;
-    popup.style.display = "block";
+  let isGood = Math.random()<0.8; // 80%好签
+  let filtered = fortunes.filter(f=> isGood ? fortunes.indexOf(f)<40 : fortunes.indexOf(f)>=40);
+  let f = filtered[Math.floor(Math.random()*filtered.length)];
+  const box = document.getElementById('fortuneBox');
+  box.innerText = f;
+  box.style.display = 'block';
 }
+
+draw();
+
+// 故事册按钮
+document.getElementById('storyBtn').addEventListener('click',()=>{
+  alert("进入故事册");
+});
+
+window.addEventListener('resize',()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 </body>
 </html>
