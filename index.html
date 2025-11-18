@@ -27,12 +27,22 @@
     color: #fffacd;
     text-shadow: 0 0 10px #000;
     z-index: 2;
+    animation: pulse 2s infinite;
   }
-  #fortuneBox {
+  @keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
+  #fortuneContainer {
     position: absolute;
     bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
+    display: none;
+    z-index: 2;
+  }
+  .fortune-card {
     background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
     padding: 25px 35px;
@@ -40,15 +50,32 @@
     font-size: 20px;
     text-align: center;
     color: #fff;
-    display: none;
     text-shadow: 0 0 5px #000;
     box-shadow: 0 0 20px #88f;
-    z-index: 2;
     animation: glow 2s infinite alternate;
+    position: relative;
+    overflow: hidden;
   }
   @keyframes glow {
     from { box-shadow: 0 0 10px #88f; }
     to { box-shadow: 0 0 20px #88f, 0 0 30px #88f; }
+  }
+  .fortune-card::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(45deg, #ff00cc, #3333ff, #00ccff, #33ff99);
+    z-index: -1;
+    filter: blur(20px);
+    opacity: 0.5;
+    animation: rotate 10s linear infinite;
+  }
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
   #storyBtn {
     position: absolute;
@@ -70,26 +97,35 @@
     background: rgba(255,255,255,0.4);
     transform: translateX(-50%) scale(1.05);
   }
-  .star-effect {
+  .constellation-name {
     position: absolute;
-    width: 100px;
-    height: 100px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 24px;
+    opacity: 0;
+    transition: opacity 1s;
+    text-shadow: 0 0 10px #88f;
+    z-index: 2;
+  }
+  .sparkle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
     pointer-events: none;
     z-index: 1;
-  }
-  .constellation-glow {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
   }
 </style>
 </head>
 <body>
 <div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
 <canvas id="canvas"></canvas>
-<div id="fortuneBox"></div>
+<div id="fortuneContainer">
+  <div class="fortune-card" id="fortuneBox"></div>
+</div>
 <button id="storyBtn">进入故事册</button>
 
 <script>
@@ -103,6 +139,13 @@ let maxStars = 5;
 let particles = [];
 let meteors = [];
 let constellationGlow = { active: false, radius: 0, alpha: 0 };
+let sparkles = [];
+
+// 星座名称
+const constellationNames = [
+  "希望之星", "幸运之环", "智慧之眼", "勇气之盾", "和谐之舞",
+  "梦想之翼", "宁静之心", "繁荣之树", "友谊之桥", "真爱之结"
+];
 
 const fortunes = [
   "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
@@ -117,7 +160,7 @@ const fortunes = [
   "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
 ];
 
-// 流星类
+// 流星类 - 改进版
 class Meteor {
   constructor() {
     this.reset();
@@ -132,6 +175,7 @@ class Meteor {
     this.active = true;
     this.alpha = 0.7 + Math.random() * 0.3;
     this.trail = [];
+    this.width = 1 + Math.random() * 2;
   }
   
   update() {
@@ -141,13 +185,16 @@ class Meteor {
     this.y += Math.sin(this.angle) * this.speed;
     
     // 记录轨迹
-    this.trail.push({x: this.x, y: this.y});
+    this.trail.push({x: this.x, y: this.y, alpha: this.alpha});
     if (this.trail.length > this.length) {
       this.trail.shift();
     }
     
-    // 检查是否超出屏幕
-    if (this.x > canvas.width || this.y > canvas.height) {
+    // 逐渐消失
+    this.alpha -= 0.01;
+    
+    // 检查是否超出屏幕或完全消失
+    if (this.x > canvas.width || this.y > canvas.height || this.alpha <= 0) {
       this.active = false;
     }
   }
@@ -156,16 +203,45 @@ class Meteor {
     if (!this.active) return;
     
     ctx.save();
-    ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "white";
     
+    // 绘制流星轨迹
+    for (let i = 0; i < this.trail.length; i++) {
+      const point = this.trail[i];
+      const progress = i / this.trail.length;
+      
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y);
+      ctx.lineTo(
+        point.x - Math.cos(this.angle) * 5, 
+        point.y - Math.sin(this.angle) * 5
+      );
+      
+      // 创建渐变
+      const gradient = ctx.createLinearGradient(
+        point.x, point.y,
+        point.x - Math.cos(this.angle) * 5,
+        point.y - Math.sin(this.angle) * 5
+      );
+      
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${point.alpha})`);
+      gradient.addColorStop(1, `rgba(100, 150, 255, 0)`);
+      
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = this.width * progress;
+      ctx.stroke();
+    }
+    
+    // 绘制流星头部
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(this.x - Math.cos(this.angle) * this.length, 
-               this.y - Math.sin(this.angle) * this.length);
-    ctx.stroke();
+    ctx.arc(this.x, this.y, this.width * 1.5, 0, Math.PI * 2);
+    const radialGradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.width * 3
+    );
+    radialGradient.addColorStop(0, `rgba(255, 255, 255, ${this.alpha})`);
+    radialGradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+    ctx.fillStyle = radialGradient;
+    ctx.fill();
     
     ctx.restore();
   }
@@ -195,6 +271,50 @@ class Particle {
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+  }
+}
+
+// 闪光粒子类
+class Sparkle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = Math.random() * 4 + 2;
+    this.speedX = (Math.random() - 0.5) * 2;
+    this.speedY = (Math.random() - 0.5) * 2;
+    this.life = 50;
+    this.maxLife = 50;
+  }
+  
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.life--;
+  }
+  
+  draw() {
+    const progress = this.life / this.maxLife;
+    ctx.save();
+    ctx.globalAlpha = progress;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * progress, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 添加光芒效果
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(
+        this.x + Math.cos(i * Math.PI / 2) * this.size * 2 * progress,
+        this.y + Math.sin(i * Math.PI / 2) * this.size * 2 * progress
+      );
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    
     ctx.restore();
   }
 }
@@ -296,8 +416,26 @@ function highlightConstellation(){
   stars.forEach(star => {
     for (let i = 0; i < 10; i++) {
       particles.push(new Particle(star.x, star.y));
+      sparkles.push(new Sparkle(star.x, star.y));
     }
   });
+  
+  // 显示星座名称
+  const nameElement = document.createElement('div');
+  nameElement.className = 'constellation-name';
+  nameElement.textContent = constellationNames[Math.floor(Math.random() * constellationNames.length)];
+  document.body.appendChild(nameElement);
+  
+  setTimeout(() => {
+    nameElement.style.opacity = 1;
+  }, 500);
+  
+  setTimeout(() => {
+    nameElement.style.opacity = 0;
+    setTimeout(() => {
+      document.body.removeChild(nameElement);
+    }, 1000);
+  }, 3000);
 }
 
 function draw(){
@@ -371,6 +509,15 @@ function draw(){
     }
   });
   
+  // 绘制和更新闪光粒子
+  sparkles.forEach((sparkle, index) => {
+    sparkle.update();
+    sparkle.draw();
+    if (sparkle.life <= 0) {
+      sparkles.splice(index, 1);
+    }
+  });
+  
   requestAnimationFrame(draw);
 }
 
@@ -380,7 +527,7 @@ canvas.addEventListener('click', e=>{
   stars.push(star);
   if(stars.length === maxStars){
     highlightConstellation(); // 星座强调效果
-    showFortune();
+    setTimeout(showFortune, 2000); // 延迟显示运势
   }
 });
 
@@ -389,16 +536,18 @@ function showFortune(){
   let filtered = fortunes.filter(f=> isGood ? fortunes.indexOf(f)<40 : fortunes.indexOf(f)>=40);
   let f = filtered[Math.floor(Math.random()*filtered.length)];
   const box = document.getElementById('fortuneBox');
+  const container = document.getElementById('fortuneContainer');
+  
   box.innerText = f;
-  box.style.display = 'block';
+  container.style.display = 'block';
   
   // 添加显示动画
-  box.style.opacity = 0;
-  box.style.transform = 'translateX(-50%) translateY(20px)';
+  container.style.opacity = 0;
+  container.style.transform = 'translateX(-50%) scale(0.8)';
   setTimeout(() => {
-    box.style.transition = 'opacity 0.5s, transform 0.5s';
-    box.style.opacity = 1;
-    box.style.transform = 'translateX(-50%) translateY(0)';
+    container.style.transition = 'opacity 0.5s, transform 0.5s';
+    container.style.opacity = 1;
+    container.style.transform = 'translateX(-50%) scale(1)';
   }, 100);
 }
 
@@ -408,9 +557,7 @@ for (let i = 0; i < 5; i++) {
 }
 
 document.getElementById('storyBtn').addEventListener('click',()=>{
-  // 这里可以改为实际的故事页面链接
-  alert("这里将跳转到故事册页面");
-  // window.location.href = "story.html";
+  window.location.href = "story.html";
 });
 
 window.addEventListener('resize',()=>{
