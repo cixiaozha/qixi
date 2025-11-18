@@ -34,6 +34,34 @@
     50% { opacity: 1; }
     100% { opacity: 0.7; }
   }
+  
+  /* 进度指示器 */
+  #progress {
+    position: absolute;
+    top: 60px;
+    width: 100%;
+    text-align: center;
+    color: #88f;
+    font-size: 16px;
+    z-index: 2;
+  }
+  
+  /* 点击提示 */
+  #clickHint {
+    position: absolute;
+    bottom: 120px;
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    z-index: 2;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
   #fortuneContainer {
     position: absolute;
     bottom: 80px;
@@ -55,6 +83,8 @@
     animation: glow 2s infinite alternate;
     position: relative;
     overflow: hidden;
+    max-width: 500px;
+    min-width: 300px;
   }
   @keyframes glow {
     from { box-shadow: 0 0 10px #88f; }
@@ -77,6 +107,38 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+  
+  /* 运势类型指示器 */
+  .fortune-type {
+    position: absolute;
+    top: -10px;
+    right: 15px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    background: rgba(255,255,255,0.3);
+  }
+  
+  /* 分享按钮 */
+  #shareBtn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 2;
+  }
+  #shareBtn:hover {
+    background: rgba(255,255,255,0.4);
+  }
+  
   #storyBtn {
     position: absolute;
     bottom: 20px;
@@ -97,6 +159,28 @@
     background: rgba(255,255,255,0.4);
     transform: translateX(-50%) scale(1.05);
   }
+  
+  /* 重置按钮 */
+  #resetBtn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 2;
+    display: none;
+  }
+  #resetBtn:hover {
+    background: rgba(255,255,255,0.4);
+  }
+  
   .constellation-name {
     position: absolute;
     top: 50%;
@@ -109,24 +193,42 @@
     text-shadow: 0 0 10px #88f;
     z-index: 2;
   }
-  .sparkle {
+  
+  /* 音效控制 */
+  #soundToggle {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    background: white;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 1;
+    top: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    color: #fff;
+    cursor: pointer;
+    z-index: 2;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    #instructions { font-size: 16px; }
+    .fortune-card { font-size: 18px; padding: 20px 25px; }
+    #storyBtn, #resetBtn, #shareBtn { padding: 12px 20px; font-size: 16px; }
   }
 </style>
 </head>
 <body>
 <div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
+<div id="progress">已点亮: 0/5</div>
+<div id="clickHint">✨ 点击任意位置放置星星 ✨</div>
 <canvas id="canvas"></canvas>
 <div id="fortuneContainer">
   <div class="fortune-card" id="fortuneBox"></div>
 </div>
+<button id="soundToggle">🔊</button>
+<button id="resetBtn">重新许愿</button>
 <button id="storyBtn">进入故事册</button>
+<button id="shareBtn">分享运势</button>
 
 <script>
 const canvas = document.getElementById('canvas');
@@ -140,6 +242,7 @@ let particles = [];
 let meteors = [];
 let constellationGlow = { active: false, radius: 0, alpha: 0 };
 let sparkles = [];
+let soundEnabled = true;
 
 // 星座名称
 const constellationNames = [
@@ -148,19 +251,30 @@ const constellationNames = [
 ];
 
 const fortunes = [
-  "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
-  "遇到好吃的美食", "心想事成的一天", "会收到小礼物", "幸运数字会出现", "适合出行",
-  "有人欣赏你的努力", "财运不错，钱包轻松", "遇到有趣的人", "心情轻松愉快", "容易得到称赞",
-  "有意外收获", "今天适合尝试新事物", "爱情小幸运", "精神状态极佳", "适合创作和动手",
-  "容易交到朋友", "会遇到有趣的对话", "财务状况平稳", "好心情持续一整天", "小愿望实现",
-  "今天适合整理计划", "有机会获得认可", "旅行心情愉快", "学习效率高", "人际顺利",
-  "被夸奖的机会多", "适合表达自己", "小惊喜连连", "尝试新技能顺利", "健康状况良好",
-  "心态积极", "工作进展顺利", "容易被人理解", "生活小确幸", "灵感频繁出现",
-  "小心容易遗忘重要事情", "注意身体疲劳", "有点小波折，不要着急", "小误会可能发生", "财务小损失",
-  "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
+  {text: "今天你会遇到小惊喜~", type: "lucky", emoji: "🎁"},
+  {text: "心情会特别好，笑容满满", type: "happy", emoji: "😊"},
+  {text: "运气不错，试试新的挑战", type: "lucky", emoji: "🍀"},
+  {text: "有人暗中帮助你", type: "lucky", emoji: "👤"},
+  {text: "工作学习都顺利", type: "success", emoji: "📚"},
+  {text: "遇到好吃的美食", type: "happy", emoji: "🍜"},
+  {text: "心想事成的一天", type: "lucky", emoji: "⭐"},
+  {text: "会收到小礼物", type: "lucky", emoji: "🎁"},
+  {text: "幸运数字会出现", type: "lucky", emoji: "🔢"},
+  {text: "适合出行", type: "travel", emoji: "✈️"},
+  {text: "小心容易遗忘重要事情", type: "warning", emoji: "⚠️"},
+  {text: "注意身体疲劳", type: "warning", emoji: "😴"},
+  {text: "有点小波折，不要着急", type: "warning", emoji: "🌀"},
+  {text: "小误会可能发生", type: "warning", emoji: "💬"},
+  {text: "财务小损失", type: "warning", emoji: "💰"}
 ];
 
-// 流星类 - 改进版
+// 音效
+const sounds = {
+  star: new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=="), // 简化的base64音频
+  complete: new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==")
+};
+
+// 流星类
 class Meteor {
   constructor() {
     this.reset();
@@ -176,6 +290,7 @@ class Meteor {
     this.alpha = 0.7 + Math.random() * 0.3;
     this.trail = [];
     this.width = 1 + Math.random() * 2;
+    this.color = `hsl(${200 + Math.random() * 40}, 100%, 70%)`;
   }
   
   update() {
@@ -184,16 +299,13 @@ class Meteor {
     this.x += Math.cos(this.angle) * this.speed;
     this.y += Math.sin(this.angle) * this.speed;
     
-    // 记录轨迹
     this.trail.push({x: this.x, y: this.y, alpha: this.alpha});
     if (this.trail.length > this.length) {
       this.trail.shift();
     }
     
-    // 逐渐消失
     this.alpha -= 0.01;
     
-    // 检查是否超出屏幕或完全消失
     if (this.x > canvas.width || this.y > canvas.height || this.alpha <= 0) {
       this.active = false;
     }
@@ -204,7 +316,6 @@ class Meteor {
     
     ctx.save();
     
-    // 绘制流星轨迹
     for (let i = 0; i < this.trail.length; i++) {
       const point = this.trail[i];
       const progress = i / this.trail.length;
@@ -216,30 +327,28 @@ class Meteor {
         point.y - Math.sin(this.angle) * 5
       );
       
-      // 创建渐变
       const gradient = ctx.createLinearGradient(
         point.x, point.y,
         point.x - Math.cos(this.angle) * 5,
         point.y - Math.sin(this.angle) * 5
       );
       
-      gradient.addColorStop(0, `rgba(255, 255, 255, ${point.alpha})`);
-      gradient.addColorStop(1, `rgba(100, 150, 255, 0)`);
+      gradient.addColorStop(0, `${this.color.replace(')', `, ${point.alpha})`)}`);
+      gradient.addColorStop(1, `${this.color.replace(')', `, 0)`)}`);
       
       ctx.strokeStyle = gradient;
       ctx.lineWidth = this.width * progress;
       ctx.stroke();
     }
     
-    // 绘制流星头部
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.width * 1.5, 0, Math.PI * 2);
     const radialGradient = ctx.createRadialGradient(
       this.x, this.y, 0,
       this.x, this.y, this.width * 3
     );
-    radialGradient.addColorStop(0, `rgba(255, 255, 255, ${this.alpha})`);
-    radialGradient.addColorStop(1, 'rgba(100, 150, 255, 0)');
+    radialGradient.addColorStop(0, `${this.color.replace(')', `, ${this.alpha})`)}`);
+    radialGradient.addColorStop(1, `${this.color.replace(')', `, 0)`)}`);
     ctx.fillStyle = radialGradient;
     ctx.fill();
     
@@ -247,7 +356,7 @@ class Meteor {
   }
 }
 
-// 粒子类
+// 其他类保持不变（Particle, Sparkle, Star）
 class Particle {
   constructor(x, y) {
     this.x = x;
@@ -275,7 +384,6 @@ class Particle {
   }
 }
 
-// 闪光粒子类
 class Sparkle {
   constructor(x, y) {
     this.x = x;
@@ -302,7 +410,6 @@ class Sparkle {
     ctx.arc(this.x, this.y, this.size * progress, 0, Math.PI * 2);
     ctx.fill();
     
-    // 添加光芒效果
     for (let i = 0; i < 4; i++) {
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
@@ -328,18 +435,18 @@ class Star {
     this.brightness = 0;
     this.pulse = 0;
     this.pulseDirection = 1;
+    this.color = `hsl(${50 + Math.random() * 20}, 100%, 70%)`;
   }
   
   draw(){
     ctx.save();
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius + this.pulse, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(255,255,180,${this.brightness})`;
-    ctx.shadowColor = '#fff';
+    ctx.fillStyle = `${this.color.replace(')', `, ${this.brightness})`)}`;
+    ctx.shadowColor = this.color;
     ctx.shadowBlur = 15;
     ctx.fill();
     
-    // 添加星光效果
     if (this.brightness > 0.5) {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI*2);
@@ -347,8 +454,8 @@ class Star {
         this.x, this.y, this.radius,
         this.x, this.y, this.radius * 2
       );
-      gradient.addColorStop(0, `rgba(255, 255, 200, ${this.brightness * 0.5})`);
-      gradient.addColorStop(1, 'rgba(255, 255, 200, 0)');
+      gradient.addColorStop(0, `${this.color.replace(')', `, ${this.brightness * 0.5})`)}`);
+      gradient.addColorStop(1, `${this.color.replace(')', `, 0)`)}`);
       ctx.fillStyle = gradient;
       ctx.fill();
     }
@@ -360,7 +467,6 @@ class Star {
     if(this.radius < this.targetRadius) this.radius += 0.3;
     if(this.brightness < 1) this.brightness += 0.05;
     
-    // 脉动效果
     if (this.brightness > 0.8) {
       this.pulse += 0.05 * this.pulseDirection;
       if (this.pulse > 1 || this.pulse < 0) {
@@ -372,25 +478,32 @@ class Star {
   }
 }
 
+// 更新进度显示
+function updateProgress() {
+  document.getElementById('progress').textContent = `已点亮: ${stars.length}/${maxStars}`;
+}
+
 function connectStars(){
   ctx.beginPath();
-  ctx.strokeStyle = 'rgba(180,220,255,0.7)';
+  
+  // 根据星星数量改变连线颜色
+  const hue = 200 + (stars.length / maxStars) * 40;
+  ctx.strokeStyle = `hsla(${hue}, 70%, 70%, 0.7)`;
   ctx.lineWidth = 2;
   ctx.shadowBlur = 10;
-  ctx.shadowColor = "rgba(180,220,255,0.7)";
+  ctx.shadowColor = `hsla(${hue}, 70%, 70%, 0.7)`;
+  
   for(let i=0;i<stars.length-1;i++){
     ctx.moveTo(stars[i].x,stars[i].y);
     ctx.lineTo(stars[i+1].x,stars[i+1].y);
   }
   ctx.stroke();
   
-  // 在线条上添加粒子
   if (stars.length > 1) {
     for (let i = 0; i < stars.length - 1; i++) {
       const start = stars[i];
       const end = stars[i+1];
       
-      // 偶尔在线条上添加粒子
       if (Math.random() < 0.1) {
         const progress = Math.random();
         const x = start.x + (end.x - start.x) * progress;
@@ -407,12 +520,10 @@ function highlightConstellation(){
     s.radius = s.targetRadius + 3;
   });
   
-  // 激活星座发光效果
   constellationGlow.active = true;
   constellationGlow.radius = 0;
   constellationGlow.alpha = 0.5;
   
-  // 在星星周围创建粒子爆发
   stars.forEach(star => {
     for (let i = 0; i < 10; i++) {
       particles.push(new Particle(star.x, star.y));
@@ -420,7 +531,6 @@ function highlightConstellation(){
     }
   });
   
-  // 显示星座名称
   const nameElement = document.createElement('div');
   nameElement.className = 'constellation-name';
   nameElement.textContent = constellationNames[Math.floor(Math.random() * constellationNames.length)];
@@ -436,12 +546,17 @@ function highlightConstellation(){
       document.body.removeChild(nameElement);
     }, 1000);
   }, 3000);
+  
+  // 播放完成音效
+  if(soundEnabled) {
+    // 这里可以添加实际音效
+    console.log("播放星座完成音效");
+  }
 }
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   
-  // 绘制背景流星
   meteors.forEach(meteor => {
     meteor.update();
     meteor.draw();
@@ -450,12 +565,10 @@ function draw(){
     }
   });
   
-  // 绘制星座发光效果
   if (constellationGlow.active) {
     ctx.save();
     ctx.beginPath();
     
-    // 计算星座中心点
     let centerX = 0, centerY = 0;
     stars.forEach(star => {
       centerX += star.x;
@@ -464,7 +577,6 @@ function draw(){
     centerX /= stars.length;
     centerY /= stars.length;
     
-    // 计算最大半径
     let maxDistance = 0;
     stars.forEach(star => {
       const distance = Math.sqrt(
@@ -473,7 +585,6 @@ function draw(){
       if (distance > maxDistance) maxDistance = distance;
     });
     
-    // 绘制发光效果
     const gradient = ctx.createRadialGradient(
       centerX, centerY, 0,
       centerX, centerY, maxDistance + constellationGlow.radius
@@ -485,7 +596,6 @@ function draw(){
     ctx.arc(centerX, centerY, maxDistance + constellationGlow.radius, 0, Math.PI * 2);
     ctx.fill();
     
-    // 更新发光效果
     constellationGlow.radius += 2;
     constellationGlow.alpha -= 0.02;
     
@@ -496,11 +606,9 @@ function draw(){
     ctx.restore();
   }
   
-  // 绘制星星和连线
   stars.forEach(s=>s.update());
   if(stars.length>1) connectStars();
   
-  // 绘制和更新粒子
   particles.forEach((particle, index) => {
     particle.update();
     particle.draw();
@@ -509,7 +617,6 @@ function draw(){
     }
   });
   
-  // 绘制和更新闪光粒子
   sparkles.forEach((sparkle, index) => {
     sparkle.update();
     sparkle.draw();
@@ -525,23 +632,42 @@ canvas.addEventListener('click', e=>{
   if(stars.length >= maxStars) return;
   let star = new Star(e.clientX, e.clientY);
   stars.push(star);
+  
+  // 播放点击音效
+  if(soundEnabled) {
+    console.log("播放星星点击音效");
+  }
+  
+  updateProgress();
+  
   if(stars.length === maxStars){
-    highlightConstellation(); // 星座强调效果
-    setTimeout(showFortune, 2000); // 延迟显示运势
+    highlightConstellation();
+    setTimeout(showFortune, 2000);
+    document.getElementById('resetBtn').style.display = 'block';
+    document.getElementById('clickHint').style.display = 'none';
   }
 });
 
 function showFortune(){
-  let isGood = Math.random()<0.8;
-  let filtered = fortunes.filter(f=> isGood ? fortunes.indexOf(f)<40 : fortunes.indexOf(f)>=40);
-  let f = filtered[Math.floor(Math.random()*filtered.length)];
+  const isGood = Math.random() < 0.8;
+  const filtered = fortunes.filter(f => 
+    isGood ? f.type !== "warning" : f.type === "warning"
+  );
+  const fortune = filtered[Math.floor(Math.random() * filtered.length)];
   const box = document.getElementById('fortuneBox');
   const container = document.getElementById('fortuneContainer');
   
-  box.innerText = f;
-  container.style.display = 'block';
+  box.innerHTML = `${fortune.emoji} ${fortune.text}`;
   
-  // 添加显示动画
+  // 添加运势类型指示
+  const typeIndicator = document.createElement('div');
+  typeIndicator.className = 'fortune-type';
+  typeIndicator.textContent = fortune.type === "warning" ? "温馨提示" : "好运签";
+  typeIndicator.style.background = fortune.type === "warning" ? 
+    'rgba(255, 100, 100, 0.3)' : 'rgba(100, 255, 100, 0.3)';
+  box.appendChild(typeIndicator);
+  
+  container.style.display = 'block';
   container.style.opacity = 0;
   container.style.transform = 'translateX(-50%) scale(0.8)';
   setTimeout(() => {
@@ -555,6 +681,37 @@ function showFortune(){
 for (let i = 0; i < 5; i++) {
   meteors.push(new Meteor());
 }
+
+// 重置功能
+document.getElementById('resetBtn').addEventListener('click', () => {
+  stars = [];
+  particles = [];
+  sparkles = [];
+  constellationGlow.active = false;
+  document.getElementById('fortuneContainer').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('clickHint').style.display = 'block';
+  updateProgress();
+});
+
+// 音效控制
+document.getElementById('soundToggle').addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+});
+
+// 分享功能
+document.getElementById('shareBtn').addEventListener('click', () => {
+  if (navigator.share) {
+    navigator.share({
+      title: '我的今日运势',
+      text: '我在流星许愿今日签获得了运势，快来试试吧！',
+      url: window.location.href
+    });
+  } else {
+    alert('分享功能需要现代浏览器支持，您可以手动复制链接分享给朋友！');
+  }
+});
 
 document.getElementById('storyBtn').addEventListener('click',()=>{
   window.location.href = "story.html";
