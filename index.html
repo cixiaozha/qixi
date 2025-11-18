@@ -31,8 +31,8 @@
     bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
-    background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80') no-repeat center center;
-    background-size: cover;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
     padding: 25px 35px;
     border-radius: 15px;
     font-size: 20px;
@@ -78,7 +78,6 @@ let stars = [];
 let maxStars = 5;
 
 const fortunes = [
-  // 好签 40条
   "今天你会遇到小惊喜~", "心情会特别好，笑容满满", "运气不错，试试新的挑战", "有人暗中帮助你", "工作学习都顺利",
   "遇到好吃的美食", "心想事成的一天", "会收到小礼物", "幸运数字会出现", "适合出行",
   "有人欣赏你的努力", "财运不错，钱包轻松", "遇到有趣的人", "心情轻松愉快", "容易得到称赞",
@@ -87,7 +86,6 @@ const fortunes = [
   "今天适合整理计划", "有机会获得认可", "旅行心情愉快", "学习效率高", "人际顺利",
   "被夸奖的机会多", "适合表达自己", "小惊喜连连", "尝试新技能顺利", "健康状况良好",
   "心态积极", "工作进展顺利", "容易被人理解", "生活小确幸", "灵感频繁出现",
-  // 坏签 10条
   "小心容易遗忘重要事情", "注意身体疲劳", "有点小波折，不要着急", "小误会可能发生", "财务小损失",
   "情绪容易波动", "容易错过机会", "争执小摩擦", "容易拖延", "需要多注意安全"
 ];
