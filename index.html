@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>流星许愿今日签</title>
+<title>冰冰牌流星签</title>
 <style>
   html, body {
     margin: 0;
@@ -198,14 +198,13 @@
 </style>
 </head>
 <body>
-<div id="instructions">点击天空，点亮 5 颗星，组成你的今日星座</div>
+<div id="instructions">点击天空，点亮 5 颗星，得到你的今日运势</div>
 <div id="progress">已点亮: 0/5</div>
 <div id="clickHint">✨ 点击任意位置放置星星 ✨</div>
 <canvas id="canvas"></canvas>
 <div id="fortuneContainer">
   <div class="fortune-card" id="fortuneBox"></div>
 </div>
-<button id="soundToggle">🔊</button>
 <button id="resetBtn">重新许愿</button>
 <button id="storyBtn">进入故事册</button>
 
@@ -233,18 +232,86 @@ const fortunes = [
   {text: "今天你会遇到小惊喜~", type: "lucky", emoji: "🎁"},
   {text: "心情会特别好，笑容满满", type: "happy", emoji: "😊"},
   {text: "运气不错，试试新的挑战", type: "lucky", emoji: "🍀"},
-  {text: "有人暗中帮助你", type: "lucky", emoji: "👤"},
+  {text: "去找冰冰玩", type: "lucky", emoji: "👤"},
   {text: "工作学习都顺利", type: "success", emoji: "📚"},
   {text: "遇到好吃的美食", type: "happy", emoji: "🍜"},
   {text: "心想事成的一天", type: "lucky", emoji: "⭐"},
-  {text: "会收到小礼物", type: "lucky", emoji: "🎁"},
-  {text: "幸运数字会出现", type: "lucky", emoji: "🔢"},
   {text: "适合出行", type: "travel", emoji: "✈️"},
+  {text: "有人欣赏你的努力", type: "success", emoji: "👏"},
+  {text: "财运不错，钱包轻松", type: "lucky", emoji: "💰"},
+  {text: "心情轻松愉快", type: "happy", emoji: "🌞"},
+  {text: "容易得到称赞", type: "success", emoji: "🏆"},
+  {text: "有意外收获", type: "lucky", emoji: "🎯"},
+  {text: "今天适合尝试新事物", type: "success", emoji: "🆕"},
+  {text: "精神状态极佳", type: "happy", emoji: "💪"},
+  {text: "适合创作和动手", type: "success", emoji: "🎨"},
+  {text: "财务状况平稳", type: "success", emoji: "💳"},
+  {text: "好心情持续一整天", type: "happy", emoji: "🌈"},
+  {text: "小愿望实现", type: "lucky", emoji: "✨"},
+  {text: "今天适合整理计划", type: "success", emoji: "📝"},
+  {text: "有机会获得认可", type: "success", emoji: "🎖️"},
+  {text: "游玩心情愉快", type: "travel", emoji: "🚗"},
+  {text: "学习效率高", type: "success", emoji: "📖"},
+  {text: "人际顺利", type: "happy", emoji: "🤝"},
+  {text: "被夸奖的机会多", type: "success", emoji: "🌟"},
+  {text: "适合表达自己", type: "success", emoji: "🎤"},
+  {text: "小惊喜连连", type: "lucky", emoji: "🎉"},
+  {text: "尝试新技能顺利", type: "success", emoji: "🛠️"},
+  {text: "健康状况良好", type: "happy", emoji: "❤️"},
+  {text: "心态积极", type: "happy", emoji: "😇"},
+  {text: "工作进展顺利", type: "success", emoji: "💼"},
+  {text: "容易被人理解", type: "happy", emoji: "💕"},
+  {text: "生活小确幸", type: "lucky", emoji: "🌼"},
+  {text: "灵感频繁出现", type: "success", emoji: "💡"},
   {text: "小心容易遗忘重要事情", type: "warning", emoji: "⚠️"},
   {text: "注意身体疲劳", type: "warning", emoji: "😴"},
   {text: "有点小波折，不要着急", type: "warning", emoji: "🌀"},
   {text: "小误会可能发生", type: "warning", emoji: "💬"},
-  {text: "财务小损失", type: "warning", emoji: "💰"}
+  {text: "财务小损失", type: "warning", emoji: "💰"},
+  {text: "情绪容易波动", type: "warning", emoji: "🌊"},
+  {text: "容易错过机会", type: "warning", emoji: "⏰"},
+  {text: "争执小摩擦", type: "warning", emoji: "⚡"},
+  {text: "容易拖延", type: "warning", emoji: "🐌"},
+  {text: "需要多注意安全", type: "warning", emoji: "🔐"},
+  {text: "沟通需要耐心", type: "warning", emoji: "🗣️"},
+  {text: "小心物品丢失", type: "warning", emoji: "🔍"},
+  {text: "注意饮食健康", type: "warning", emoji: "🍎"},
+  {text: "计划可能有变", type: "warning", emoji: "📅"},
+  {text: "需要更多休息", type: "warning", emoji: "🛌"},
+  {text: "避免冲动消费", type: "warning", emoji: "🛒"},
+  {text: "小心交通延误", type: "warning", emoji: "🚦"},
+  {text: "注意时间管理", type: "warning", emoji: "⏳"},
+  {text: "避免过度承诺", type: "warning", emoji: "🤞"},
+  {text: "检查重要文件", type: "warning", emoji: "📄"},
+  // 新增的好运签
+  {text: "贵人相助，事半功倍", type: "lucky", emoji: "🙏"},
+  {text: "创意无限，灵感迸发", type: "success", emoji: "🎭"},
+  {text: "团队合作默契", type: "success", emoji: "👥"},
+  {text: "桃花运旺盛", type: "lucky", emoji: "🌸"},
+  {text: "学习新知识很快", type: "success", emoji: "🧠"},
+  {text: "解决问题能力强", type: "success", emoji: "🔧"},
+  {text: "身体健康活力足", type: "happy", emoji: "🏃"},
+  {text: "人际关系和谐", type: "happy", emoji: "💞"},
+  {text: "事业有新突破", type: "success", emoji: "🚀"},
+  {text: "旅行收获满满", type: "travel", emoji: "🎒"},
+  {text: "艺术天赋展现", type: "success", emoji: "🎶"},
+  {text: "财运亨通", type: "lucky", emoji: "💎"},
+  {text: "内心平静安宁", type: "happy", emoji: "🧘"},
+  {text: "机会主动找上门", type: "lucky", emoji: "🚪"},
+  {text: "表达清晰有说服力", type: "success", emoji: "🎯"},
+  {text: "运动表现优异", type: "success", emoji: "⚽"},
+  {text: "美食运超好", type: "happy", emoji: "🍣"},
+  {text: "睡眠质量很高", type: "happy", emoji: "🌙"},
+  // 新增的温馨提示
+  {text: "小心言语误会", type: "warning", emoji: "🔇"},
+  {text: "避免过度劳累", type: "warning", emoji: "😫"},
+  {text: "注意天气变化", type: "warning", emoji: "🌧️"},
+  {text: "重要约会提前确认", type: "warning", emoji: "📞"},
+  {text: "检查随身物品", type: "warning", emoji: "🎒"},
+  {text: "避免重要决定", type: "warning", emoji: "🤔"},
+  {text: "注意饮食卫生", type: "warning", emoji: "🍽️"},
+  {text: "小心网络诈骗", type: "warning", emoji: "🕸️"},
+  {text: "重要文件备份", type: "warning", emoji: "💾"}
 ];
 
 // 背景星星类
@@ -629,3 +696,4 @@ draw();
 </script>
 </body>
 </html>
+
