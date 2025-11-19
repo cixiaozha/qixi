@@ -174,21 +174,6 @@
     z-index: 2;
   }
   
-  /* 音效控制 */
-  #soundToggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
-    border: none;
-    padding: 8px 12px;
-    border-radius: 20px;
-    color: #fff;
-    cursor: pointer;
-    z-index: 2;
-  }
-  
   /* 响应式设计 */
   @media (max-width: 768px) {
     #instructions { font-size: 16px; }
@@ -220,7 +205,6 @@ let particles = [];
 let backgroundStars = [];
 let constellationGlow = { active: false, radius: 0, alpha: 0 };
 let sparkles = [];
-let soundEnabled = true;
 
 // 星座名称
 const constellationNames = [
@@ -531,12 +515,6 @@ function highlightConstellation(){
       document.body.removeChild(nameElement);
     }, 1000);
   }, 3000);
-  
-  // 播放完成音效
-  if(soundEnabled) {
-    // 这里可以添加实际音效
-    console.log("播放星座完成音效");
-  }
 }
 
 function draw(){
@@ -616,11 +594,6 @@ canvas.addEventListener('click', e=>{
   let star = new Star(e.clientX, e.clientY);
   stars.push(star);
   
-  // 播放点击音效
-  if(soundEnabled) {
-    console.log("播放星星点击音效");
-  }
-  
   updateProgress();
   
   if(stars.length === maxStars){
@@ -677,12 +650,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   updateProgress();
 });
 
-// 音效控制
-document.getElementById('soundToggle').addEventListener('click', () => {
-  soundEnabled = !soundEnabled;
-  document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
-});
-
 document.getElementById('storyBtn').addEventListener('click',()=>{
   window.location.href = "story.html";
 });
@@ -696,4 +663,3 @@ draw();
 </script>
 </body>
 </html>
-
