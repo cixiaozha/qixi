@@ -2,12 +2,112 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>收信箱 - 冰冰 & 轩轩</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收信箱</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 使用CDN方式引入Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
+            authDomain: "letter-7e55f.firebaseapp.com",
+            projectId: "letter-7e55f",
+            storageBucket: "letter-7e55f.firebasestorage.app",
+            messagingSenderId: "548585980662",
+            appId: "1:548585980662:web:04b91b01d509f54f9562d7",
+            measurementId: "G-RQ90689GRT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.loadMessages = async () => {
+            const viewer = document.getElementById("viewerName").value;
+            const messagesContainer = document.getElementById("messages");
+            
+            messagesContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>';
+            
+            try {
+                // 最简单的查询，获取所有文档
+                const querySnapshot = await getDocs(collection(db, "messages"));
+                
+                messagesContainer.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    messagesContainer.innerHTML = '<div class="loading">还没有任何信件</div>';
+                    return;
+                }
+                
+                // 过滤出给当前用户的信件
+                const userMessages = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.to === viewer) {
+                        userMessages.push({
+                            id: doc.id,
+                            ...data
+                        });
+                    }
+                });
+                
+                if (userMessages.length === 0) {
+                    messagesContainer.innerHTML = '<div class="loading">还没有收到信件</div>';
+                    return;
+                }
+                
+                // 按时间戳手动排序（新的在前）
+                userMessages.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.toDate().getTime() : 0;
+                    const timeB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
+                    return timeB - timeA;
+                });
+                
+                // 显示消息
+                userMessages.forEach((data) => {
+                    const sentAt = data.timestamp ? 
+                        new Date(data.timestamp.toDate()).toLocaleString('zh-CN') : 
+                        '未知时间';
+                    
+                    const messageCard = document.createElement("div");
+                    messageCard.className = "message-card";
+                    messageCard.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-from">${data.from} 写给 ${data.to}</span>
+                            <span class="message-time">${sentAt}</span>
+                        </div>
+                        <div class="message-content">
+                            ${data.text}
+                        </div>
+                    `;
+                    messagesContainer.appendChild(messageCard);
+                });
+                
+            } catch (e) {
+                console.error("加载失败:", e);
+                let errorMessage = '加载失败，请重试';
+                
+                if (e.code === 'permission-denied') {
+                    errorMessage = '没有读取权限，请检查Firebase安全规则';
+                }
+                
+                messagesContainer.innerHTML = `
+                    <div class="loading error">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        ${errorMessage}<br>
+                        <small>错误详情: ${e.message}</small>
+                    </div>
+                `;
+            }
+        };
+
+        // 页面加载时自动加载当前用户的信件
+        window.onload = function() {
+            // 默认加载冰冰的信件
+            document.getElementById("viewerName").value = "冰冰";
+            loadMessages();
+        };
+    </script>
     <style>
         :root {
             --primary: #c44569;
@@ -23,7 +123,6 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -33,8 +132,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
-            overflow-x: hidden;
+            padding: 20px;
         }
         
         .container {
@@ -45,12 +143,12 @@
         
         header {
             text-align: center;
-            padding: 15px 0;
+            padding: 20px 0;
         }
         
         h1 {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            margin-bottom: 8px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
@@ -58,49 +156,134 @@
         }
         
         .subtitle {
-            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-size: 1.1rem;
             color: var(--dark);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .messages-container {
             background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            margin-top: 15px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
             width: 100%;
+        }
+        
+        .message-card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .message-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        
+        .message-from {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+        
+        .message-time {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .message-content {
+            line-height: 1.6;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            font-size: 1.05rem;
+            color: var(--dark);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+        
+        .loading.error {
+            color: #e74c3c;
+        }
+        
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: var(--light);
+            transform: translateX(-3px);
         }
         
         .user-selection {
             background: var(--light);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
         }
         
         .form-group {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         
         label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: var(--primary);
-            font-size: clamp(0.9rem, 3vw, 1rem);
+            font-size: 1.1rem;
         }
         
         select {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 15px;
             border-radius: 10px;
             border: 2px solid #eee;
             background: white;
             color: var(--text);
-            font-size: 16px;
-            -webkit-appearance: none;
-            appearance: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(247, 143, 179, 0.3);
         }
         
         .btn-load {
@@ -108,7 +291,7 @@
             color: white;
             border: none;
             border-radius: 10px;
-            padding: 14px 20px;
+            padding: 14px 25px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -118,128 +301,75 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            touch-action: manipulation;
-            min-height: 50px;
         }
         
-        .btn-load:active {
-            transform: scale(0.98);
-        }
-        
-        .btn-load:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .message-card {
-            background: var(--light);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--primary);
-        }
-        
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .message-from {
-            font-weight: bold;
-            color: var(--primary);
-            font-size: clamp(0.9rem, 3vw, 1rem);
-        }
-        
-        .message-time {
-            color: #666;
-            font-size: 0.8rem;
-        }
-        
-        .message-content {
-            line-height: 1.5;
-            white-space: pre-wrap;
-            font-size: clamp(0.9rem, 3vw, 1rem);
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: var(--dark);
-        }
-        
-        .loading i {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 15px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            background: white;
-            padding: 10px 16px;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-            font-size: clamp(0.9rem, 3vw, 1rem);
+        .btn-load:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .message-count {
             text-align: center;
-            margin: 12px 0;
+            margin: 15px 0;
             color: var(--primary);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         
         footer {
-            margin-top: 30px;
+            margin-top: 40px;
             text-align: center;
             color: var(--dark);
-            font-size: 0.8rem;
-            padding: 15px;
+            font-size: 0.9rem;
+            padding: 20px;
         }
         
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
+            padding: 50px 20px;
             color: #666;
         }
         
         .empty-state i {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
+            font-size: 3rem;
+            margin-bottom: 15px;
             color: var(--accent);
         }
         
-        /* 移动端优化 */
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .messages-container {
-                padding: 15px;
-            }
-            
+        @media (max-width: 768px) {
             .message-header {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: 5px;
             }
             
             .message-time {
                 align-self: flex-end;
             }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .messages-container {
+                padding: 20px;
+            }
         }
         
-        /* 加载动画 */
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
         .fa-spin {
             animation: fa-spin 1s infinite linear;
         }
@@ -270,7 +400,7 @@
                         <option value="轩轩">轩轩</option>
                     </select>
                 </div>
-                <button class="btn-load" id="loadButton" onclick="loadMessages()">
+                <button class="btn-load" onclick="loadMessages()">
                     <i class="fas fa-sync-alt"></i> 查看我的信件
                 </button>
             </div>
@@ -278,7 +408,7 @@
             <div id="messages">
                 <div class="loading">
                     <i class="fas fa-spinner fa-spin"></i><br>
-                    正在加载...
+                    正在加载信件...
                 </div>
             </div>
         </div>
@@ -289,138 +419,23 @@
     </div>
 
     <script>
-        // Firebase 配置和初始化
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
-            authDomain: "letter-7e55f.firebaseapp.com",
-            projectId: "letter-7e55f",
-            storageBucket: "letter-7e55f.firebasestorage.app",
-            messagingSenderId: "548585980662",
-            appId: "1:548585980662:web:04b91b01d509f54f9562d7",
-            measurementId: "G-RQ90689GRT"
-        };
-
-        // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // 加载消息函数
-        async function loadMessages() {
-            const viewer = document.getElementById("viewerName").value;
-            const messagesContainer = document.getElementById("messages");
-            const loadButton = document.getElementById("loadButton");
-            
-            // 更新按钮状态
-            loadButton.disabled = true;
-            loadButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
-            
-            messagesContainer.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><br>加载中...</div>';
-            
-            try {
-                const querySnapshot = await db.collection("messages").get();
-                
-                messagesContainer.innerHTML = '';
-                
-                if (querySnapshot.empty) {
-                    messagesContainer.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-envelope-open"></i>
-                            <p>还没有任何信件</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // 过滤出给当前用户的信件
-                const userMessages = [];
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if (data.to === viewer) {
-                        userMessages.push({
-                            id: doc.id,
-                            ...data
-                        });
-                    }
-                });
-                
-                if (userMessages.length === 0) {
-                    messagesContainer.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-envelope"></i>
-                            <p>还没有收到信件</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                // 按时间戳手动排序（新的在前）
-                userMessages.sort((a, b) => {
-                    const timeA = a.timestamp ? a.timestamp.toDate().getTime() : 0;
-                    const timeB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
-                    return timeB - timeA;
-                });
-                
-                // 显示消息数量
-                const countElement = document.createElement('div');
-                countElement.className = 'message-count';
-                countElement.textContent = `共 ${userMessages.length} 封信件`;
-                messagesContainer.appendChild(countElement);
-                
-                // 显示消息
-                userMessages.forEach((data) => {
-                    const sentAt = data.timestamp ? 
-                        new Date(data.timestamp.toDate()).toLocaleString('zh-CN') : 
-                        '未知时间';
-                    
-                    const messageCard = document.createElement("div");
-                    messageCard.className = "message-card";
-                    messageCard.innerHTML = `
-                        <div class="message-header">
-                            <span class="message-from">${data.from} 写给 ${data.to}</span>
-                            <span class="message-time">${sentAt}</span>
-                        </div>
-                        <div class="message-content">
-                            ${data.text}
-                        </div>
-                    `;
-                    messagesContainer.appendChild(messageCard);
-                });
-                
-            } catch (e) {
-                console.error("加载失败:", e);
-                let errorMessage = '加载失败，请重试';
-                
-                if (e.code === 'permission-denied') {
-                    errorMessage = '没有读取权限';
-                } else if (e.message.includes('network')) {
-                    errorMessage = '网络连接失败，请检查网络';
-                }
-                
-                messagesContainer.innerHTML = `
-                    <div class="loading">
-                        <i class="fas fa-exclamation-triangle"></i><br>
-                        ${errorMessage}
-                    </div>
-                `;
-            } finally {
-                // 恢复按钮状态
-                loadButton.disabled = false;
-                loadButton.innerHTML = '<i class="fas fa-sync-alt"></i> 查看我的信件';
-            }
-        }
-
-        // 页面加载时自动加载
-        window.addEventListener('load', function() {
-            setTimeout(() => {
+        // 添加一些额外的交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 当选择框改变时自动加载
+            document.getElementById('viewerName').addEventListener('change', function() {
                 loadMessages();
-            }, 500);
+            });
+            
+            // 添加键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    window.location.href = 'index.html';
+                }
+                if (e.key === 'r' || e.key === 'R') {
+                    loadMessages();
+                }
+            });
         });
-
-        // 选择框改变时自动加载
-        document.getElementById('viewerName').addEventListener('change', loadMessages);
-
-        // 移动端触摸优化
-        document.addEventListener('touchstart', function() {}, {passive: true});
     </script>
 </body>
 </html>
