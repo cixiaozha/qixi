@@ -2,12 +2,51 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>写信 - 冰冰 & 轩轩</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写信</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 使用CDN方式引入Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
+            authDomain: "letter-7e55f.firebaseapp.com",
+            projectId: "letter-7e55f",
+            storageBucket: "letter-7e55f.firebasestorage.app",
+            messagingSenderId: "548585980662",
+            appId: "1:548585980662:web:04b91b01d509f54f9562d7",
+            measurementId: "G-RQ90689GRT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.sendMessage = async () => {
+            const sender = document.getElementById("senderName").value;
+            const recipient = document.getElementById("recipientName").value;
+            const text = document.getElementById("messageText").value.trim();
+            
+            if (!text) {
+                alert("信件内容不能为空");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "messages"), {
+                    from: sender,
+                    to: recipient,
+                    text: text,
+                    timestamp: serverTimestamp()
+                });
+                alert("发送成功！");
+                document.getElementById("messageText").value = "";
+            } catch (e) {
+                console.error("发送失败:", e);
+                alert("发送失败，请重试");
+            }
+        };
+    </script>
     <style>
         :root {
             --primary: #c44569;
@@ -23,7 +62,6 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -33,8 +71,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
-            overflow-x: hidden;
+            padding: 20px;
         }
         
         .container {
@@ -45,12 +82,12 @@
         
         header {
             text-align: center;
-            padding: 15px 0;
+            padding: 20px 0;
         }
         
         h1 {
-            font-size: clamp(1.8rem, 5vw, 2.5rem);
-            margin-bottom: 8px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
@@ -58,42 +95,39 @@
         }
         
         .subtitle {
-            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-size: 1.1rem;
             color: var(--dark);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .letter-form {
             background: white;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            margin-top: 15px;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
         }
         
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: var(--primary);
-            font-size: clamp(0.9rem, 3vw, 1rem);
         }
         
         select, textarea {
             width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
+            padding: 12px 15px;
+            border-radius: 10px;
             border: 2px solid #eee;
             background: #f9f9f9;
             color: var(--text);
-            font-size: 16px; /* 防止iOS缩放 */
+            font-size: 1rem;
             transition: all 0.3s;
-            -webkit-appearance: none;
-            appearance: none;
         }
         
         select:focus, textarea:focus {
@@ -103,17 +137,16 @@
         }
         
         textarea {
-            min-height: 200px;
+            min-height: 250px;
             resize: vertical;
-            line-height: 1.5;
         }
         
         .btn-send {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 16px 30px;
+            border-radius: 10px;
+            padding: 14px 30px;
             font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
@@ -121,78 +154,35 @@
             display: block;
             width: 100%;
             margin-top: 20px;
-            touch-action: manipulation;
-            min-height: 54px;
         }
         
-        .btn-send:active {
-            transform: scale(0.98);
-        }
-        
-        .btn-send:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 15px;
+            display: inline-block;
+            margin-bottom: 20px;
             color: var(--primary);
             text-decoration: none;
             font-weight: 600;
             background: white;
-            padding: 10px 16px;
+            padding: 10px 20px;
             border-radius: 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-            font-size: clamp(0.9rem, 3vw, 1rem);
         }
         
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            color: var(--primary);
-        }
-        
-        .loading.show {
-            display: block;
+        .back-btn:hover {
+            background: var(--light);
         }
         
         footer {
-            margin-top: 30px;
+            margin-top: 40px;
             text-align: center;
             color: var(--dark);
-            font-size: 0.8rem;
-            padding: 15px;
-        }
-        
-        /* 移动端优化 */
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-            
-            .letter-form {
-                padding: 15px;
-                border-radius: 12px;
-            }
-            
-            .btn-send {
-                padding: 14px 20px;
-                font-size: 1rem;
-            }
-            
-            select, textarea {
-                padding: 12px;
-            }
-        }
-        
-        /* 防止iOS缩放 */
-        input, textarea, select {
-            font-size: 16px !important;
+            font-size: 0.9rem;
+            padding: 20px;
         }
     </style>
 </head>
@@ -226,113 +216,17 @@
             
             <div class="form-group">
                 <label for="messageText">信件内容</label>
-                <textarea id="messageText" placeholder="写下你的心里话..." maxlength="1000"></textarea>
-                <div style="text-align: right; margin-top: 5px; color: #666; font-size: 0.8rem;">
-                    <span id="charCount">0</span>/1000
-                </div>
+                <textarea id="messageText" placeholder="写下你的心里话..."></textarea>
             </div>
             
-            <button class="btn-send" id="sendButton" onclick="sendMessage()">
+            <button class="btn-send" onclick="sendMessage()">
                 <i class="fas fa-paper-plane"></i> 发送信件
             </button>
-            
-            <div class="loading" id="loadingIndicator">
-                <i class="fas fa-spinner fa-spin"></i> 发送中...
-            </div>
         </div>
         
         <footer>
             <p>只属于冰冰和轩轩的甜蜜空间 ❤️</p>
         </footer>
     </div>
-
-    <script>
-        // Firebase 配置和初始化
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
-            authDomain: "letter-7e55f.firebaseapp.com",
-            projectId: "letter-7e55f",
-            storageBucket: "letter-7e55f.firebasestorage.app",
-            messagingSenderId: "548585980662",
-            appId: "1:548585980662:web:04b91b01d509f54f9562d7",
-            measurementId: "G-RQ90689GRT"
-        };
-
-        // 初始化 Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // 字符计数
-        document.getElementById('messageText').addEventListener('input', function() {
-            document.getElementById('charCount').textContent = this.value.length;
-        });
-
-        // 发送消息函数
-        async function sendMessage() {
-            const sender = document.getElementById("senderName").value;
-            const recipient = document.getElementById("recipientName").value;
-            const text = document.getElementById("messageText").value.trim();
-            const sendButton = document.getElementById("sendButton");
-            const loadingIndicator = document.getElementById("loadingIndicator");
-            
-            if (!text) {
-                alert("信件内容不能为空");
-                return;
-            }
-
-            if (text.length > 1000) {
-                alert("信件内容不能超过1000字");
-                return;
-            }
-
-            // 禁用按钮并显示加载
-            sendButton.disabled = true;
-            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 发送中...';
-            loadingIndicator.classList.add('show');
-
-            try {
-                await db.collection("messages").add({
-                    from: sender,
-                    to: recipient,
-                    text: text,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                alert("发送成功！");
-                document.getElementById("messageText").value = "";
-                document.getElementById("charCount").textContent = "0";
-                
-            } catch (e) {
-                console.error("发送失败:", e);
-                alert("发送失败，请检查网络连接后重试");
-            } finally {
-                // 恢复按钮状态
-                sendButton.disabled = false;
-                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i> 发送信件';
-                loadingIndicator.classList.remove('show');
-            }
-        }
-
-        // 移动端触摸优化
-        document.addEventListener('touchstart', function() {}, {passive: true});
-        
-        // 防止双击缩放
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
-
-        // 页面加载完成后的初始化
-        window.addEventListener('load', function() {
-            // 确保页面完全加载
-            setTimeout(() => {
-                console.log('页面加载完成，Firebase 已初始化');
-            }, 100);
-        });
-    </script>
 </body>
 </html>
