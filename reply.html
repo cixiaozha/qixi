@@ -1,55 +1,270 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8">
-<title>查看信件</title>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收信箱 - 冰冰 & 轩轩</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
-    authDomain: "letter-7e55f.firebaseapp.com",
-    projectId: "letter-7e55f",
-    storageBucket: "letter-7e55f.firebasestorage.app",
-    messagingSenderId: "548585980662",
-    appId: "1:548585980662:web:04b91b01d509f54f9562d7",
-    measurementId: "G-RQ90689GRT"
-  };
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-uySj9cGYhkwrJdotbAfsbm8tb0fFLxs",
+            authDomain: "letter-7e55f.firebaseapp.com",
+            projectId: "letter-7e55f",
+            storageBucket: "letter-7e55f.firebasestorage.app",
+            messagingSenderId: "548585980662",
+            appId: "1:548585980662:web:04b91b01d509f54f9562d7",
+            measurementId: "G-RQ90689GRT"
+        };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-  let recipientName = '';
-
-  window.onload = async () => {
-    recipientName = prompt("请输入你的昵称：") || "轩轩";
-    await loadMessages();
-  };
-
-  async function loadMessages() {
-    const container = document.getElementById("messages");
-    container.innerHTML = "";
-    const q = query(collection(db, "messages"), where("to", "==", recipientName));
-    const snap = await getDocs(q);
-    snap.forEach(doc => {
-      const data = doc.data();
-      const sentAt = data.timestamp ? data.timestamp.toDate().toLocaleString() : '';
-      const div = document.createElement("div");
-      div.style.borderBottom = "1px solid rgba(255,255,255,0.2)";
-      div.style.padding = "10px 0";
-      div.innerHTML = `<p>${data.text}</p><small>来自: ${data.from} | ${sentAt}</small>`;
-      container.appendChild(div);
-    });
-  }
-</script>
-<style>
-  body{font-family: Arial,sans-serif;background:#0b1220;color:#fff;padding:20px;}
-  #messages{max-width:600px;margin:auto;}
-</style>
+        window.loadMessages = async () => {
+            const viewer = document.getElementById("viewerName").value;
+            const messagesContainer = document.getElementById("messages");
+            
+            messagesContainer.innerHTML = '<div class="loading">加载中...</div>';
+            
+            try {
+                const q = query(
+                    collection(db, "messages"), 
+                    where("to", "==", viewer),
+                    orderBy("timestamp", "desc")
+                );
+                const querySnapshot = await getDocs(q);
+                
+                messagesContainer.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    messagesContainer.innerHTML = '<div class="loading">还没有收到信件</div>';
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const sentAt = data.timestamp ? 
+                        new Date(data.timestamp.toDate()).toLocaleString('zh-CN') : 
+                        '未知时间';
+                    
+                    const messageCard = document.createElement("div");
+                    messageCard.className = "message-card";
+                    messageCard.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-from">${data.from} 写给 ${data.to}</span>
+                            <span>${sentAt}</span>
+                        </div>
+                        <div class="message-content">
+                            ${data.text}
+                        </div>
+                    `;
+                    messagesContainer.appendChild(messageCard);
+                });
+            } catch (e) {
+                console.error("加载失败:", e);
+                messagesContainer.innerHTML = '<div class="loading">加载失败，请重试</div>';
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --primary: #c44569;
+            --secondary: #e66767;
+            --accent: #f78fb3;
+            --light: #fff5f7;
+            --dark: #2d3436;
+            --text: #2d3436;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffd6e7 0%, #ffefef 100%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+        
+        .messages-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .message-card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        
+        .message-content {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        
+        .message-from {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--dark);
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-btn:hover {
+            background: var(--light);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid #eee;
+            background: #f9f9f9;
+            color: var(--text);
+            font-size: 1rem;
+        }
+        
+        .btn-load {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-load:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--dark);
+            font-size: 0.9rem;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .message-header {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
 </head>
 <body>
-<h2>你的信件</h2>
-<div id="messages"></div>
+    <div class="container">
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-left"></i> 返回主页
+        </a>
+        
+        <header>
+            <h1>收信箱</h1>
+            <p class="subtitle">查看所有甜蜜的信件</p>
+        </header>
+        
+        <div class="messages-container">
+            <div class="form-group">
+                <label for="viewerName">我是</label>
+                <select id="viewerName">
+                    <option value="冰冰">冰冰</option>
+                    <option value="轩轩">轩轩</option>
+                </select>
+                <button class="btn-load" onclick="loadMessages()">
+                    <i class="fas fa-sync-alt"></i> 查看我的信件
+                </button>
+            </div>
+            
+            <div id="messages">
+                <div class="loading">请选择你的身份并点击查看信件</div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>只属于冰冰和轩轩的甜蜜空间 ❤️</p>
+        </footer>
+    </div>
 </body>
 </html>
