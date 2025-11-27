@@ -2,8 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>查看给轩轩的信件</title>
+<title>查看信件</title>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
   import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
@@ -14,38 +13,43 @@
     projectId: "letter-7e55f",
     storageBucket: "letter-7e55f.firebasestorage.app",
     messagingSenderId: "548585980662",
-    appId: "1:548585980662:web:04b91b01d509f54f9562d7"
+    appId: "1:548585980662:web:04b91b01d509f54f9562d7",
+    measurementId: "G-RQ90689GRT"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  async function loadMessages(){
-    const q = query(collection(db,"messages"), where("to","==","轩轩"));
+  let recipientName = '';
+
+  window.onload = async () => {
+    recipientName = prompt("请输入你的昵称：") || "轩轩";
+    await loadMessages();
+  };
+
+  async function loadMessages() {
+    const container = document.getElementById("messages");
+    container.innerHTML = "";
+    const q = query(collection(db, "messages"), where("to", "==", recipientName));
     const snap = await getDocs(q);
-    const container = document.getElementById("msgList");
-    container.innerHTML="";
-    snap.forEach(doc=>{
+    snap.forEach(doc => {
       const data = doc.data();
+      const sentAt = data.timestamp ? data.timestamp.toDate().toLocaleString() : '';
       const div = document.createElement("div");
-      div.className="msg";
-      div.innerHTML=`<p>${data.text}</p><span>来自: ${data.from}</span>`;
+      div.style.borderBottom = "1px solid rgba(255,255,255,0.2)";
+      div.style.padding = "10px 0";
+      div.innerHTML = `<p>${data.text}</p><small>来自: ${data.from} | ${sentAt}</small>`;
       container.appendChild(div);
     });
   }
-  window.onload = loadMessages;
 </script>
 <style>
-  body{margin:0;padding:20px;font-family:'Inter',sans-serif;background: linear-gradient(135deg,#0b1220,#1c1f2c);color:#fff;}
-  h1{text-align:center;margin-bottom:20px;}
-  .msg{background:rgba(51,209,255,0.1);padding:16px;border-radius:12px;margin-bottom:16px;}
-  .msg span{display:block;margin-top:8px;font-size:0.85rem;color:#7affc2;}
-  .back{margin-top:20px;text-align:center;color:#33d1ff;cursor:pointer;}
+  body{font-family: Arial,sans-serif;background:#0b1220;color:#fff;padding:20px;}
+  #messages{max-width:600px;margin:auto;}
 </style>
 </head>
 <body>
-<h1>收到的信件</h1>
-<div id="msgList"></div>
-<div class="back" onclick="location.href='index.html'">← 回主界面</div>
+<h2>你的信件</h2>
+<div id="messages"></div>
 </body>
 </html>
