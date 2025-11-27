@@ -2,7 +2,6 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>写信给轩轩</title>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -14,40 +13,47 @@
     projectId: "letter-7e55f",
     storageBucket: "letter-7e55f.firebasestorage.app",
     messagingSenderId: "548585980662",
-    appId: "1:548585980662:web:04b91b01d509f54f9562d7"
+    appId: "1:548585980662:web:04b91b01d509f54f9562d7",
+    measurementId: "G-RQ90689GRT"
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  let senderName = '';
+
+  window.onload = () => {
+    senderName = prompt("请输入你的昵称：") || "匿名";
+  };
+
   window.sendMessage = async () => {
-    const text = document.getElementById("msgText").value.trim();
-    if(!text) { alert("请输入信件内容"); return; }
-    try{
-      await addDoc(collection(db,"messages"),{
-        from:"冰宝",
-        to:"轩轩",
-        text:text,
-        timestamp:serverTimestamp()
+    const text = document.getElementById("messageText").value.trim();
+    if (!text) { alert("信件内容不能为空"); return; }
+
+    try {
+      await addDoc(collection(db, "messages"), {
+        from: senderName,
+        to: "轩轩",
+        text: text,
+        timestamp: serverTimestamp()
       });
-      document.getElementById("msgText").value="";
-      alert("✅ 已发送！")
-    }catch(e){console.error(e); alert("发送失败") }
-  }
+      alert("发送成功！");
+      document.getElementById("messageText").value = "";
+    } catch (e) {
+      console.error(e);
+      alert("发送失败，请检查配置");
+    }
+  };
 </script>
 <style>
-  body{margin:0;padding:0;font-family:'Inter',sans-serif;background: linear-gradient(135deg,#0b1220,#1c1f2c);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;}
-  h1{margin-bottom:20px;}
-  textarea{width:90%;max-width:500px;height:200px;border-radius:12px;border:none;padding:16px;font-size:1rem;}
-  button{margin-top:20px;padding:16px 32px;border:none;border-radius:12px;background: linear-gradient(90deg,#33d1ff,#7affc2);color:#07101a;font-size:1.2rem;cursor:pointer;}
-  button:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(51,209,255,0.3);}
-  .back{margin-top:40px;color:#33d1ff;cursor:pointer;}
+  body{font-family: Arial,sans-serif;background:#0b1220;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;}
+  textarea{width:100%;max-width:500px;height:150px;padding:10px;border-radius:8px;border:none;resize:none;}
+  button{margin-top:12px;padding:10px 20px;border:none;border-radius:999px;background:linear-gradient(90deg,#33d1ff,#7affc2);color:#07101a;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
-<h1>写信给轩轩</h1>
-<textarea id="msgText" placeholder="在这里写下你的心意..."></textarea>
-<button onclick="sendMessage()">发送信件</button>
-<div class="back" onclick="location.href='index.html'">← 回主界面</div>
+<h2>给轩轩写信</h2>
+<textarea id="messageText" placeholder="写下你的信..."></textarea>
+<button onclick="sendMessage()">发送</button>
 </body>
 </html>
