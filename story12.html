@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>我们的故事 - 故事12</title>
+<link rel="stylesheet" href="style.css">
+<!-- 中文手写字体 -->
+<link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="story-page">
+
+  <!-- 信封容器：层级顺序很重要！ -->
+  <div class="envelope" id="envelope" aria-label="点击打开信封">
+    <div class="pocket"></div>        <!-- 信封底座（最底层） -->
+    <div class="letter">               <!-- 信纸（内容层） -->
+      <div class="letter-container">
+        <div class="letter-photo">
+          <img src="images/story12.jpg" alt="故事1">
+        </div>
+        <div class="letter-text">
+          <h2>生日快乐轩轩>s'r>
+          <p>
+            这是我给你过的第一个生日>-<<br>
+            希望你可以天天开心，也会一直变更好的<br>
+            生日快乐！亲爱的宝宝
+          </p>
+          <p class="date">2025-11-14</p>
+        </div>
+      </div>
+    </div>
+    <div class="front"></div>         <!-- 信封正面（打开后淡出） -->
+    <div class="flap"></div>          <!-- 信封盖（上翻） -->
+  </div>
+
+  <div class="back-link">
+    <a href="story.html">← 回到故事册</a>
+  </div>
+
+<script>
+  // 点击信封打开
+  const env = document.getElementById('envelope');
+  env.addEventListener('click', () => env.classList.add('open'));
+
+  // 如果想默认就打开，调试用：取消下面注释
+  // env.classList.add('open');
+</script>
+</body>
+</html>
