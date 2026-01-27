@@ -5,21 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我们的花盆小世界 🌱</title>
 <style>
-    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #ffe6f0, #fff0f5); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
-    h1 { font-size: 2rem; color: #c44569; margin-bottom: 10px; }
-    .flowerPot { width: 300px; height: 300px; border: 2px solid #c44569; display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); gap: 2px; margin-bottom: 20px; position: relative; }
-    .pixel { width: 100%; height: 100%; background: #fff5f7; transition: background 0.3s; }
-    .buttons { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-    button { padding: 10px 20px; border: none; border-radius: 8px; background: linear-gradient(135deg,#ff9ff3,#f368e0); color:#fff; font-weight:bold; cursor:pointer; transition: transform 0.2s; }
-    button:hover { transform: translateY(-3px); }
-    .titles { margin-bottom: 10px; font-size:1rem; color:#c44569; }
-    .messages { width: 300px; max-height: 150px; overflow-y: auto; border:1px solid #f78fb3; padding:5px; margin-bottom:10px; background:#fff5f7; border-radius:5px; }
-    .messageInput { display:flex; gap:5px; margin-bottom:20px; }
-    .messageInput input { flex:1; padding:5px; border-radius:5px; border:1px solid #f78fb3; }
-    .giftOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; color:#fff; font-size:2rem; z-index:999; display:none; flex-direction: column; }
+body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#ffe6f0,#fff0f5); display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh;}
+h1 { font-size:2rem; color:#c44569; margin-bottom:10px;}
+.flowerPot { width:300px; height:300px; border:2px solid #c44569; display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr); gap:2px; margin-bottom:20px; position:relative;}
+.pixel { width:100%; height:100%; background:#fff5f7; transition: background 0.3s; }
+.buttons { display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; justify-content:center; }
+button { padding:10px 20px; border:none; border-radius:8px; background:linear-gradient(135deg,#ff9ff3,#f368e0); color:#fff; font-weight:bold; cursor:pointer; transition: transform 0.2s; }
+button:hover { transform:translateY(-3px); }
+.titles { margin-bottom:10px; font-size:1rem; color:#c44569; }
+.messages { width:300px; max-height:150px; overflow-y:auto; border:1px solid #f78fb3; padding:5px; margin-bottom:10px; background:#fff5f7; border-radius:5px; }
+.messageInput { display:flex; gap:5px; margin-bottom:20px; }
+.messageInput input { flex:1; padding:5px; border-radius:5px; border:1px solid #f78fb3; }
+.giftOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; color:#fff; font-size:2rem; z-index:999; display:none; flex-direction: column; }
 </style>
 </head>
 <body>
+
 <h1>我们的花盆小世界 🌱</h1>
 <div class="flowerPot" id="flowerPot"></div>
 <div class="titles" id="titles"></div>
@@ -60,6 +61,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const flowerPotRef = db.ref('flowerPot');
+
+// ====== 自动初始化数据库 ======
+flowerPotRef.once('value').then(snapshot => {
+  if (!snapshot.exists()) {
+    const initBlocks = Array(100).fill({color:'#fff5f7'});
+    flowerPotRef.set({
+      blocks: initBlocks,
+      currentDay: 0,
+      lastWatered: 0,
+      titles: [],
+      messages: [],
+      matured: false
+    });
+  }
+});
 
 // ====== 渲染花盆 ======
 const flowerPotDiv = document.getElementById('flowerPot');
