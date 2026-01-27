@@ -15,6 +15,13 @@
             background: linear-gradient(135deg, #fff0f5, #ffe6f0);
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
             color: #c44569;
+            overflow: hidden;
+        }
+
+        /* 背景光晕动画 */
+        @keyframes glow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .container {
@@ -29,40 +36,59 @@
             overflow: hidden;
         }
 
-        .container::before, .container::after {
+        /* 光晕效果 */
+        .container::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,182,193,0.2), transparent 70%);
+            animation: glow 10s linear infinite;
+        }
+
+        .container::after {
             content: "❤";
             position: absolute;
             font-size: 2rem;
             color: #ff6b81;
             opacity: 0.3;
-        }
-
-        .container::before {
             top: 10px;
             left: 15px;
-        }
-
-        .container::after {
-            bottom: 10px;
-            right: 20px;
         }
 
         .title {
             font-size: clamp(18px, 5vw, 22px);
             margin-bottom: 20px;
             font-weight: 500;
+            position: relative;
+            z-index: 1;
         }
 
+        /* 心跳数字 */
         .days {
             font-size: clamp(64px, 16vw, 100px);
             font-weight: 700;
             margin-bottom: 15px;
             text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+            animation: heartbeat 1.5s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.05); }
         }
 
         .since {
             font-size: clamp(12px, 3.5vw, 14px);
             opacity: 0.7;
+            position: relative;
+            z-index: 1;
         }
 
         @media (max-width: 768px) {
