@@ -65,6 +65,7 @@ const flowerPotRef = db.ref('flowerPot');
 // ====== 自动初始化数据库 ======
 flowerPotRef.once('value').then(snapshot => {
   if (!snapshot.exists()) {
+    console.log("数据库未初始化，自动生成 flowerPot 节点");
     const initBlocks = Array(100).fill({color:'#fff5f7'});
     flowerPotRef.set({
       blocks: initBlocks,
@@ -74,6 +75,8 @@ flowerPotRef.once('value').then(snapshot => {
       messages: [],
       matured: false
     });
+  } else {
+    console.log("数据库已存在：", snapshot.val());
   }
 });
 
@@ -153,7 +156,6 @@ document.getElementById('waterBtn').addEventListener('click', ()=>{
             lastWatered: now,
             blocks: blocksArr,
             titles: titles,
-            lastAction: '你今天浇了水 💧',
             matured: matured
         });
     });
@@ -182,7 +184,6 @@ document.getElementById('magicBtn').addEventListener('click', ()=>{
             currentDay: currentDay,
             blocks: blocksArr,
             titles: titles,
-            lastAction: '神秘力量 💫',
             matured: matured
         });
     });
@@ -202,5 +203,6 @@ document.getElementById('sendMsgBtn').addEventListener('click', ()=>{
     });
 });
 </script>
+
 </body>
 </html>
