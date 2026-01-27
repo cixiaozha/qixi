@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我们的花盆小世界 🌱</title>
 <style>
-body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#ffe6f0,#fff0f5); display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh;}
+body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#ffe6f0,#fff0f5); display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh;}
 h1 { font-size:2rem; color:#c44569; margin-bottom:10px;}
 .flowerPot { width:300px; height:300px; border:2px solid #c44569; display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr); gap:2px; margin-bottom:20px; }
-.pixel { width:100%; height:100%; background:#fff5f7; transition: background 0.3s; }
+.pixel { width:100%; height:100%; background:#fff5f7; transition:background 0.3s; }
 .buttons { display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; justify-content:center; }
 button { padding:10px 20px; border:none; border-radius:8px; background:linear-gradient(135deg,#ff9ff3,#f368e0); color:#fff; font-weight:bold; cursor:pointer; transition: transform 0.2s; }
 button:hover { transform:translateY(-3px); }
@@ -16,7 +16,7 @@ button:hover { transform:translateY(-3px); }
 .messages { width:300px; max-height:150px; overflow-y:auto; border:1px solid #f78fb3; padding:5px; margin-bottom:10px; background:#fff5f7; border-radius:5px; }
 .messageInput { display:flex; gap:5px; margin-bottom:20px; }
 .messageInput input { flex:1; padding:5px; border-radius:5px; border:1px solid #f78fb3; }
-.giftOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; color:#fff; font-size:2rem; z-index:999; display:none; flex-direction: column; }
+.giftOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; color:#fff; font-size:2rem; z-index:999; display:none; flex-direction: column; }
 </style>
 </head>
 <body>
@@ -41,23 +41,23 @@ button:hover { transform:translateY(-3px); }
     <button onclick="document.getElementById('giftOverlay').style.display='none'">关闭</button>
 </div>
 
-<!-- Firebase 兼容 SDK -->
+<!-- Firebase 兼容 SDK CDN -->
 <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-database-compat.js"></script>
 
 <script>
 window.onload = function() {
+
   // ====== Firebase 配置 ======
   const firebaseConfig = {
-  apiKey: "AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
-  authDomain: "flowerpotapp-d0c7a.firebaseapp.com",
-  databaseURL: "https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "flowerpotapp-d0c7a",
-  storageBucket: "flowerpotapp-d0c7a.appspot.com",
-  messagingSenderId: "347864027088",
-  appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
-};
-
+    apiKey: "AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
+    authDomain: "flowerpotapp-d0c7a.firebaseapp.com",
+    databaseURL: "https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "flowerpotapp-d0c7a",
+    storageBucket: "flowerpotapp-d0c7a.appspot.com",
+    messagingSenderId: "347864027088",
+    appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
+  };
 
   // 初始化 Firebase
   firebase.initializeApp(firebaseConfig);
