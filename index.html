@@ -40,49 +40,16 @@
 
         header {
             text-align: center;
-            padding: 30px 0;
-            position: relative;
-        }
-
-        .hearts {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .heart {
-            position: absolute;
-            color: var(--primary);
-            font-size: 20px;
-            opacity: 0.7;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0); }
-            50% { transform: translateY(-20px) rotate(10deg); }
+            padding: 50px 0 30px 0;
         }
 
         h1 {
             font-size: 2.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            position: relative;
-            z-index: 1;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: var(--dark);
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
         }
 
         .couple-names {
@@ -90,8 +57,6 @@
             font-weight: bold;
             color: var(--primary);
             margin-top: 10px;
-            position: relative;
-            z-index: 1;
         }
 
         .nav-buttons {
@@ -137,14 +102,6 @@
         .btn-story { background: linear-gradient(135deg, #ff9f43, #feca57); }
         .btn-together { background: linear-gradient(135deg, #ff6b6b, #ff9f43); }
 
-        .love-quote {
-            text-align: center;
-            font-style: italic;
-            margin: 30px 0;
-            color: var(--primary);
-            font-size: 1.1rem;
-        }
-
         footer {
             margin-top: 40px;
             text-align: center;
@@ -173,15 +130,9 @@
 <body>
     <div class="container">
         <header>
-            <div class="hearts" id="hearts-container"></div>
             <h1>属于我们的小世界</h1>
-            <p class="subtitle">记录我们在一起的点滴和故事</p>
             <div class="couple-names">冰冰 ❤️ 轩轩</div>
         </header>
-
-        <div class="love-quote">
-            "在无数个平行宇宙中，我都会找到你，然后爱上你"
-        </div>
 
         <div class="nav-buttons">
             <a href="write.html" class="nav-btn btn-write">
@@ -193,7 +144,7 @@
                 <span>查看信件</span>
             </a>
             <a href="story.html" class="nav-btn btn-story">
-                <i class="fas fa-book-heart"></i>
+                <i class="fas fa-book"></i>
                 <span>我们的故事</span>
             </a>
             <a href="together.html" class="nav-btn btn-together">
@@ -206,26 +157,5 @@
             <p>只属于冰冰和轩轩的甜蜜空间 ❤️</p>
         </footer>
     </div>
-
-    <script>
-        function createHearts() {
-            const container = document.getElementById('hearts-container');
-            const heartCount = 15;
-
-            for (let i = 0; i < heartCount; i++) {
-                const heart = document.createElement('div');
-                heart.className = 'heart';
-                heart.innerHTML = '❤';
-                heart.style.left = Math.random() * 100 + '%';
-                heart.style.top = Math.random() * 100 + '%';
-                heart.style.animationDelay = Math.random() * 5 + 's';
-                container.appendChild(heart);
-            }
-        }
-
-        window.onload = function() {
-            createHearts();
-        };
-    </script>
 </body>
 </html>
