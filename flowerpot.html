@@ -67,7 +67,6 @@ window.onload = function() {
   // 自动初始化数据库
   flowerPotRef.once('value').then(snapshot => {
     if (!snapshot.exists()) {
-      console.log("数据库未初始化，自动生成 flowerPot 节点");
       const initBlocks = Array(100).fill({color:'#fff5f7'});
       flowerPotRef.set({
         blocks: initBlocks,
