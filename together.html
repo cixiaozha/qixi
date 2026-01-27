@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我们在一起</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #ffe6e6 0%, #fff0f5 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            color: #c44569;
+        }
+
+        .together-container {
+            text-align: center;
+            padding: 30px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .title {
+            font-size: clamp(18px, 5vw, 24px);
+            margin-bottom: 15px;
+            opacity: 0.85;
+        }
+
+        .days {
+            font-size: clamp(56px, 14vw, 96px);
+            font-weight: 600;
+            margin: 10px 0;
+            transition: all 0.6s ease;
+        }
+
+        .since {
+            font-size: clamp(12px, 4vw, 14px);
+            margin-top: 8px;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .days {
+                font-size: clamp(48px, 14vw, 80px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="together-container">
+        <div class="title">我们已经在一起</div>
+        <div class="days" id="days">0 天</div>
+        <div class="since">从 2024.10.01 开始</div>
+    </div>
+
+    <script>
+        const startDate = new Date("2024-10-01T00:00:00");
+        const daysEl = document.getElementById("days");
+
+        function updateDays() {
+            const now = new Date();
+            const diffTime = now - startDate;
+            const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            daysEl.textContent = days + " 天";
+        }
+
+        updateDays();
+        setInterval(updateDays, 1000 * 60); // 每分钟刷新
+    </script>
+</body>
+</html>
