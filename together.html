@@ -18,7 +18,6 @@
             overflow: hidden;
         }
 
-        /* 背景光晕动画 */
         @keyframes glow {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -36,7 +35,6 @@
             overflow: hidden;
         }
 
-        /* 光晕效果 */
         .container::before {
             content: "";
             position: absolute;
@@ -60,21 +58,29 @@
 
         .title {
             font-size: clamp(18px, 5vw, 22px);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: 500;
             position: relative;
             z-index: 1;
         }
 
-        /* 心跳数字 */
+        .reminder {
+            font-size: clamp(12px, 3vw, 14px);
+            opacity: 0.6;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
         .days {
             font-size: clamp(64px, 16vw, 100px);
             font-weight: 700;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
             animation: heartbeat 1.5s ease-in-out infinite;
             position: relative;
             z-index: 1;
+            cursor: pointer;
         }
 
         @keyframes heartbeat {
@@ -92,15 +98,14 @@
         }
 
         @media (max-width: 768px) {
-            .days {
-                font-size: clamp(48px, 18vw, 80px);
-            }
+            .days { font-size: clamp(48px, 18vw, 80px); }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="title">我们已经在一起</div>
+        <div class="reminder">💡 双击天数可切换显示方式</div>
         <div class="days" id="days">0 天</div>
         <div class="since">从 2025.05.11 开始</div>
     </div>
@@ -109,15 +114,32 @@
         const startDate = new Date("2025-05-11T00:00:00");
         const daysEl = document.getElementById("days");
 
-        function updateDays() {
+        // 显示模式: 0=天, 1=小时, 2=分钟
+        let mode = 0;
+
+        function updateDisplay() {
             const now = new Date();
-            const diffTime = now - startDate;
-            const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            daysEl.textContent = days + " 天";
+            const diffMs = now - startDate;
+            if (mode === 0) {
+                const days = Math.floor(diffMs / (1000*60*60*24));
+                daysEl.textContent = days + " 天";
+            } else if (mode === 1) {
+                const hours = Math.floor(diffMs / (1000*60*60));
+                daysEl.textContent = hours + " 小时";
+            } else {
+                const minutes = Math.floor(diffMs / (1000*60));
+                daysEl.textContent = minutes + " 分钟";
+            }
         }
 
-        updateDays();
-        setInterval(updateDays, 1000 * 60); // 每分钟更新
+        // 双击切换模式
+        daysEl.addEventListener("dblclick", () => {
+            mode = (mode + 1) % 3;
+            updateDisplay();
+        });
+
+        updateDisplay();
+        setInterval(updateDisplay, 60*1000); // 每分钟更新
     </script>
 </body>
 </html>
