@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快来种花吧</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <div class="app">
+    <h1>🌱 520天盆栽惊喜</h1>
+
+    <p id="dayText">已浇水天数：--</p>
+
+    <!-- 花盆区域 -->
+    <div class="flowerpot-container">
+      <img src="./images/pot.png" class="pot" alt="花盆">
+      <img src="./images/flower1.png" class="flower" id="flowerImg" alt="花">
+    </div>
+
+    <!-- 操作区 -->
+    <div class="controls">
+      <input id="messageInput" placeholder="描述今天的心情或发生的事情吧~（选填）">
+      <button id="waterBtn">💧 今日浇水</button>
+    </div>
+  </div>
+
+  <!-- 弹幕 -->
+  <div id="popup" class="popup"></div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
