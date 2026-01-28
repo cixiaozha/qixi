@@ -12,7 +12,7 @@ const firebaseConfig = {
   appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
 };
 
-/* 初始化 */
+/* 初始化 Firebase */
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const potRef = ref(db, "flowerPot");
@@ -41,43 +41,47 @@ const titles = [
   "成熟礼物拥有者 🎁"
 ];
 
-/* 弹幕 */
+/* 弹幕显示函数 */
 function showPopup(text) {
   popup.textContent = text;
   popup.style.display = "block";
+  popup.classList.add("popup-animate");
   setTimeout(() => {
     popup.style.display = "none";
+    popup.classList.remove("popup-animate");
   }, 3200);
 }
 
 /* 加载花盆和花 */
 async function loadPot() {
   const snap = await get(potRef);
-  let data;
+  let data = snap.exists() ? snap.val() : null;
 
-  if (!snap.exists()) {
+  if (!data) {
     data = {
       currentDay: 0,
       lastWatered: 0,
       messages: {},
-      specialEvents: {}
+      specialEvents: {},
+      matured: false
     };
     await set(potRef, data);
-  } else {
-    data = snap.val();
   }
 
   /* 显示天数 */
-  dayText.textContent = `已浇水天数：${data.currentDay}`;
+  dayText.textContent = `已浇水天数：${data.currentDay ?? 0}`;
 
   /* 花成长（13 张图 / 每 40 天） */
-  const stage = Math.min(Math.floor(data.currentDay / 40) + 1, 13);
+  const stage = Math.min(Math.floor((data.currentDay ?? 0) / 40) + 1, 13);
   flowerImg.src = `./images/flower${stage}.png`;
 
-  /* 小动画淡入 */
-  flowerImg.classList.remove("show");
+  /* 花朵从下到上淡入 */
+  flowerImg.style.opacity = 0;
+  flowerImg.style.transform = "translateY(30px)";
   setTimeout(() => {
-    flowerImg.classList.add("show");
+    flowerImg.style.transition = "all 0.8s ease";
+    flowerImg.style.opacity = 1;
+    flowerImg.style.transform = "translateY(0)";
   }, 50);
 
   /* 称号弹幕（每 40 天） */
@@ -91,13 +95,14 @@ async function loadPot() {
   yesterday.setDate(yesterday.getDate() - 1);
   const yKey = yesterday.toISOString().split("T")[0];
 
-  if (data.specialEvents?.[yKey]?.length) {
-    const lastEvent = data.specialEvents[yKey].slice(-1)[0];
+  const events = data.specialEvents?.[yKey] ?? [];
+  if (events.length > 0) {
+    const lastEvent = events[events.length - 1];
     showPopup(`✨ 神秘力量：${lastEvent}`);
   }
 
   /* 成熟提示（520 天，仅一次） */
-  if (data.currentDay >= 520 && !data.matured) {
+  if ((data.currentDay ?? 0) >= 520 && !data.matured) {
     showPopup("🎁 花已成熟，命运被彻底改写");
     await set(potRef, { ...data, matured: true });
   }
@@ -106,29 +111,29 @@ async function loadPot() {
 /* 浇水（每天一次） */
 waterBtn.onclick = async () => {
   const snap = await get(potRef);
-  const data = snap.val();
+  const data = snap.exists() ? snap.val() : { currentDay: 0, lastWatered: 0, messages: {}, specialEvents: {}, matured: false };
 
-  const today = new Date().toDateString();
-  const last = new Date(data.lastWatered).toDateString();
+  const todayStr = new Date().toDateString();
+  const lastStr = new Date(data.lastWatered ?? 0).toDateString();
 
-  if (today === last) {
+  if (todayStr === lastStr) {
     alert("今天已经浇过水啦 💧");
     return;
   }
 
   /* 留言：只存，不显示 */
   const msg = messageInput.value.trim();
-  const messages = data.messages || {};
+  const messages = data.messages ?? {};
   const todayKey = new Date().toISOString().split("T")[0];
 
   if (msg) {
-    messages[todayKey] = messages[todayKey] || [];
+    messages[todayKey] = messages[todayKey] ?? [];
     messages[todayKey].push(msg);
   }
 
   await set(potRef, {
     ...data,
-    currentDay: data.currentDay + 1,
+    currentDay: (data.currentDay ?? 0) + 1,
     lastWatered: Date.now(),
     messages
   });
