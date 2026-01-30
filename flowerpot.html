@@ -4,204 +4,197 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>我们的花盆小世界 🌱</title>
+
 <style>
-body { font-family:'Segoe UI',sans-serif; background:linear-gradient(135deg,#ffe6f0,#fff0f5); display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh;}
-h1 { font-size:2rem; color:#c44569; margin-bottom:10px;}
-.flowerPot { width:300px; height:300px; border:2px solid #c44569; display:grid; grid-template-columns:repeat(10,1fr); grid-template-rows:repeat(10,1fr); gap:2px; margin-bottom:20px; }
-.pixel { width:100%; height:100%; background:#fff5f7; transition:background 0.3s; }
-.buttons { display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; justify-content:center; }
-button { padding:10px 20px; border:none; border-radius:8px; background:linear-gradient(135deg,#ff9ff3,#f368e0); color:#fff; font-weight:bold; cursor:pointer; transition: transform 0.2s; }
-button:hover { transform:translateY(-3px); }
-.titles { margin-bottom:10px; font-size:1rem; color:#c44569; }
-.messages { width:300px; max-height:150px; overflow-y:auto; border:1px solid #f78fb3; padding:5px; margin-bottom:10px; background:#fff5f7; border-radius:5px; }
-.messageInput { display:flex; gap:5px; margin-bottom:20px; }
-.messageInput input { flex:1; padding:5px; border-radius:5px; border:1px solid #f78fb3; }
-.giftOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; color:#fff; font-size:2rem; z-index:999; display:none; flex-direction: column; }
+body {
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#ffe6f0,#fff0f5);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px;
+  min-height:100vh;
+}
+
+h1 { color:#c44569; margin-bottom:10px; }
+
+.flowerPot {
+  width:300px; height:300px;
+  border:2px solid #c44569;
+  display:grid;
+  grid-template-columns:repeat(10,1fr);
+  grid-template-rows:repeat(10,1fr);
+  gap:2px;
+  margin-bottom:15px;
+}
+
+.pixel { background:#fff5f7; }
+
+.buttons {
+  display:flex;
+  gap:12px;
+  margin-bottom:15px;
+}
+
+button {
+  padding:10px 18px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(135deg,#ff9ff3,#f368e0);
+  color:#fff;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.titles {
+  margin:10px 0;
+  color:#c44569;
+  font-weight:bold;
+}
+
+.calendar {
+  width:320px;
+  background:#fff;
+  border-radius:10px;
+  padding:10px;
+  border:1px solid #f78fb3;
+}
+
+.day {
+  margin-bottom:8px;
+}
+
+.day-title {
+  font-weight:bold;
+  color:#c44569;
+  margin-bottom:4px;
+}
+
+.log {
+  font-size:0.9rem;
+  padding-left:10px;
+}
 </style>
 </head>
+
 <body>
 
 <h1>我们的花盆小世界 🌱</h1>
+
 <div class="flowerPot" id="flowerPot"></div>
-<div class="titles" id="titles"></div>
+
 <div class="buttons">
-    <button id="waterBtn">浇水 💧</button>
-    <button id="magicBtn">神秘力量 ✨</button>
+  <button id="waterBtn">浇水 💧</button>
+  <button id="magicBtn">神秘力量 ✨</button>
 </div>
 
-<div class="messages" id="messages"></div>
-<div class="messageInput">
-    <input type="text" id="messageInput" placeholder="写下今天的留言...">
-    <button id="sendMsgBtn">发送</button>
-</div>
+<div class="titles">📅 浇水日历（只读）</div>
+<div class="calendar" id="calendar"></div>
 
-<div class="giftOverlay" id="giftOverlay">
-    <div>🎉 花盆成熟啦！🎉</div>
-    <div>你获得了专属大礼物 ❤️</div>
-    <button onclick="document.getElementById('giftOverlay').style.display='none'">关闭</button>
-</div>
-
-<!-- Firebase 兼容 SDK CDN -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.20.0/firebase-database-compat.js"></script>
 
 <script>
-window.onload = function() {
+const firebaseConfig = {
+  apiKey: "AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
+  authDomain: "flowerpotapp-d0c7a.firebaseapp.com",
+  databaseURL: "https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "flowerpotapp-d0c7a",
+  storageBucket: "flowerpotapp-d0c7a.appspot.com",
+  messagingSenderId: "347864027088",
+  appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
+};
 
-  // ====== Firebase 配置 ======
-  const firebaseConfig = {
-    apiKey: "AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
-    authDomain: "flowerpotapp-d0c7a.firebaseapp.com",
-    databaseURL: "https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "flowerpotapp-d0c7a",
-    storageBucket: "flowerpotapp-d0c7a.appspot.com",
-    messagingSenderId: "347864027088",
-    appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
-  };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ref = db.ref('flowerPot');
 
-  // 初始化 Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const flowerPotRef = db.ref('flowerPot');
+const flowerPotDiv = document.getElementById('flowerPot');
+const calendarDiv = document.getElementById('calendar');
 
-  // 自动初始化数据库
-  flowerPotRef.once('value').then(snapshot => {
-    if (!snapshot.exists()) {
-      const initBlocks = Array(100).fill({color:'#fff5f7'});
-      flowerPotRef.set({
-        blocks: initBlocks,
-        currentDay: 0,
-        lastWatered: 0,
-        titles: [],
-        messages: [],
-        matured: false
-      });
+function renderPot(blocks){
+  flowerPotDiv.innerHTML='';
+  for(let i=0;i<100;i++){
+    const d=document.createElement('div');
+    d.className='pixel';
+    if(blocks && blocks[i]) d.style.background=blocks[i].color;
+    flowerPotDiv.appendChild(d);
+  }
+}
+
+function renderCalendar(logs){
+  calendarDiv.innerHTML='';
+  if(!logs) return;
+
+  Object.keys(logs).sort().forEach(date=>{
+    const day=document.createElement('div');
+    day.className='day';
+
+    const title=document.createElement('div');
+    title.className='day-title';
+    title.innerText=date;
+
+    day.appendChild(title);
+
+    logs[date].forEach(l=>{
+      const p=document.createElement('div');
+      const icon=l.type==='water'?'💧':'✨';
+      p.className='log';
+      p.innerText=`${icon} ${l.time}${l.message?' ｜ '+l.message:''}`;
+      day.appendChild(p);
+    });
+
+    calendarDiv.appendChild(day);
+  });
+}
+
+ref.on('value',snap=>{
+  const data=snap.val()||{};
+  renderPot(data.blocks);
+  renderCalendar(data.logs);
+});
+
+// ===== 浇水 =====
+document.getElementById('waterBtn').onclick=()=>{
+  ref.once('value').then(s=>{
+    const d=s.val()||{};
+    const today=new Date().toISOString().slice(0,10);
+    const nowStr=new Date().toLocaleString();
+
+    if(new Date(d.lastWatered||0).toDateString()===new Date().toDateString()){
+      alert('今天已经浇过水啦 🌱');
+      return;
     }
+
+    const logs=d.logs||{};
+    if(!logs[today]) logs[today]=[];
+    logs[today].push({type:'water',time:nowStr,message:''});
+
+    ref.update({
+      lastWatered:Date.now(),
+      currentDay:(d.currentDay||0)+1,
+      logs
+    });
+
+    alert('💧 浇水成功！');
   });
+};
 
-  // ====== 渲染花盆 ======
-  const flowerPotDiv = document.getElementById('flowerPot');
-  let blocks = [];
-  function renderFlowerPot(blocksArr) {
-      flowerPotDiv.innerHTML = '';
-      for (let i=0;i<100;i++){
-          const div = document.createElement('div');
-          div.className = 'pixel';
-          if(blocksArr && blocksArr[i] && blocksArr[i].color){
-              div.style.background = blocksArr[i].color;
-          }
-          flowerPotDiv.appendChild(div);
-      }
-  }
+// ===== 神秘力量 =====
+document.getElementById('magicBtn').onclick=()=>{
+  ref.once('value').then(s=>{
+    const d=s.val()||{};
+    const today=new Date().toISOString().slice(0,10);
+    const nowStr=new Date().toLocaleString();
 
-  // ====== 显示称号 ======
-  const titlesDiv = document.getElementById('titles');
-  function updateTitles(titlesArr){
-      titlesDiv.innerText = titlesArr ? '称号：' + titlesArr.join(' | ') : '';
-  }
+    const logs=d.logs||{};
+    if(!logs[today]) logs[today]=[];
+    logs[today].push({type:'magic',time:nowStr,message:''});
 
-  // ====== 留言 ======
-  const messagesDiv = document.getElementById('messages');
-  function updateMessages(msgArr){
-      messagesDiv.innerHTML = '';
-      if(msgArr){
-          msgArr.forEach(m=>{
-              const p = document.createElement('div');
-              p.innerText = m;
-              messagesDiv.appendChild(p);
-          });
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }
-  }
-
-  // ====== 页面实时监听 ======
-  flowerPotRef.on('value', snapshot=>{
-      const data = snapshot.val() || {};
-      blocks = data.blocks || [];
-      renderFlowerPot(blocks);
-      updateTitles(data.titles);
-      updateMessages(data.messages);
-      if(data.matured) document.getElementById('giftOverlay').style.display='flex';
+    ref.update({ logs });
+    alert('✨ 神秘力量触发！');
   });
-
-  // ====== 浇水逻辑 ======
-  document.getElementById('waterBtn').addEventListener('click', ()=>{
-      flowerPotRef.once('value').then(snapshot=>{
-          const data = snapshot.val() || {};
-          const now = Date.now();
-          const lastWatered = data.lastWatered || 0;
-          const today = new Date().toDateString();
-          const lastDay = new Date(lastWatered).toDateString();
-          if(today === lastDay){
-              alert('今天已经浇过水啦 🌱');
-              return;
-          }
-          const currentDay = (data.currentDay||0)+1;
-          let titles = data.titles||[];
-          if(currentDay % 20 === 0){
-              const newTitle = ['最佳浇水员 🌸','花盆守护者 🌿','幸福播种师 🌼','爱心园丁 💖','花盆魔法师 ✨','浪漫花园守护者 🌹'][(currentDay/20-1)%6];
-              titles.push(newTitle);
-              alert('🎉 花盆成长啦！称号：'+newTitle);
-          }
-          let blocksArr = data.blocks||Array(100).fill({color:'#fff5f7'});
-          for(let i=0;i<5;i++){
-              const idx = Math.floor(Math.random()*100);
-              blocksArr[idx]={color:'#ff9f43'};
-          }
-          let matured = data.matured||false;
-          if(currentDay >= 100) matured = true;
-          flowerPotRef.update({
-              currentDay: currentDay,
-              lastWatered: now,
-              blocks: blocksArr,
-              titles: titles,
-              matured: matured
-          });
-      });
-  });
-
-  // ====== 神秘力量按钮 ======
-  document.getElementById('magicBtn').addEventListener('click', ()=>{
-      flowerPotRef.once('value').then(snapshot=>{
-          const data = snapshot.val() || {};
-          let currentDay = (data.currentDay||0) + Math.floor(Math.random()*5)+1;
-          let titles = data.titles||[];
-          while(currentDay >= titles.length*20+20){
-              const idx = titles.length%6;
-              const newTitle = ['最佳浇水员 🌸','花盆守护者 🌿','幸福播种师 🌼','爱心园丁 💖','花盆魔法师 ✨','浪漫花园守护者 🌹'][idx];
-              titles.push(newTitle);
-              alert('✨ 神秘力量触发！称号提前获得：'+newTitle);
-          }
-          let blocksArr = data.blocks||Array(100).fill({color:'#fff5f7'});
-          for(let i=0;i<5;i++){
-              const idx = Math.floor(Math.random()*100);
-              blocksArr[idx]={color:'#ff9f43'};
-          }
-          let matured = data.matured||false;
-          if(currentDay >= 100) matured = true;
-          flowerPotRef.update({
-              currentDay: currentDay,
-              blocks: blocksArr,
-              titles: titles,
-              matured: matured
-          });
-      });
-  });
-
-  // ====== 留言 ======
-  document.getElementById('sendMsgBtn').addEventListener('click', ()=>{
-      const input = document.getElementById('messageInput');
-      const msg = input.value.trim();
-      if(!msg) return;
-      flowerPotRef.once('value').then(snapshot=>{
-          const data = snapshot.val() || {};
-          const messages = data.messages||[];
-          messages.push(msg);
-          flowerPotRef.update({messages:messages});
-          input.value='';
-      });
-  });
-
 };
 </script>
 
