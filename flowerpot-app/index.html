@@ -2,178 +2,171 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>520天盆栽</title>
+<title>小盆栽成长记录</title>
 
 <style>
-body{background:#fff5f7;font-family:system-ui;margin:0;}
-.app{max-width:420px;margin:40px auto;padding:25px;background:white;border-radius:20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.12);}
+body{
+  font-family:sans-serif;
+  background:#f7f8fc;
+  text-align:center;
+}
 
-.flowerpot-container{position:relative;width:220px;height:260px;margin:80px auto 0;}
-.pot{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;}
-.flower{position:absolute;bottom:55px;left:50%;transform:translateX(-50%) translateY(30px);width:130px;opacity:0;transition:0.8s;}
-.flower.show{opacity:1;transform:translateX(-50%) translateY(0);}
+h2{margin:10px;}
 
-.controls{margin-top:15px;display:flex;flex-direction:column;gap:10px;}
-input{padding:10px;border-radius:10px;border:1px solid #ccc;}
-button{padding:12px;border-radius:14px;border:none;background:#ff8fab;color:white;cursor:pointer;}
+#months,#calendar{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  max-width:420px;
+  margin:10px auto;
+}
 
-.popup{position:fixed;top:12%;left:50%;transform:translateX(-50%);background:#ffe0eb;padding:14px 22px;border-radius:16px;font-weight:bold;color:#c44569;display:none;}
+.month,.day{
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+  background:#e0e0e0;
+}
 
-.calendar-container{margin-top:20px;background:#fff6fa;border-radius:14px;padding:12px;}
-#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px;}
-.day{padding:6px 0;border-radius:8px;font-size:11px;cursor:pointer;}
-.gray{background:#eee;color:#aaa;}
-.watered{background:#222;color:#fff;}
-.event{background:#ffd700;color:#000;}
-.today{outline:2px solid #ff8fab;}
+.month:hover,.day:hover{opacity:0.8;}
 
-.day-detail{margin-top:16px;background:#fff0f5;border-radius:14px;padding:12px;text-align:left;}
+.day.gray{background:#e0e0e0;}
+.day.watered{background:#000;color:#fff;}
+.day.event{background:gold;color:#000;}
+.today{border:2px solid red;}
+
+.day-detail{
+  margin:16px auto;
+  max-width:420px;
+  background:#fff0f5;
+  border-radius:12px;
+  padding:10px;
+  text-align:left;
+}
+
+#popup{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+#popupBox{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="app">
-<h2>🌱 520天盆栽</h2>
-<p id="dayText">已浇水天数：--</p>
+<h2>🌱 小盆栽成长记录</h2>
 
-<div class="flowerpot-container">
-<img src="./images/pot.png" class="pot">
-<img src="./images/flower1.png" class="flower" id="flowerImg">
-</div>
-
-<div class="controls">
-<input id="messageInput" placeholder="写点今天的话（选填）">
-<button id="waterBtn">💧 今日浇水</button>
-</div>
-
-<div class="calendar-container">
-<h3>📅 时间日历</h3>
+<div id="months"></div>
 <div id="calendar"></div>
-</div>
 
 <div class="day-detail">
-<h3>📜 当天记录</h3>
-<div id="detailContent">点击日历查看某一天 🌱</div>
+  <h3>📜 当天记录</h3>
+  <div id="detailContent">点击某一天查看 🌱</div>
 </div>
 
+<div id="popup">
+  <div id="popupBox"></div>
 </div>
-
-<div id="popup" class="popup"></div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-const firebaseConfig={
-apiKey:"AIzaSy...",
-authDomain:"flowerpotapp-d0c7a.firebaseapp.com",
-databaseURL:"https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId:"flowerpotapp-d0c7a"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-const potRef=db.ref("flowerPot");
-
-const dayText=document.getElementById("dayText");
-const flowerImg=document.getElementById("flowerImg");
-const waterBtn=document.getElementById("waterBtn");
-const messageInput=document.getElementById("messageInput");
-const popup=document.getElementById("popup");
+const startDate=new Date("2026-01-28");
+const monthsDiv=document.getElementById("months");
 const calendar=document.getElementById("calendar");
 const detail=document.getElementById("detailContent");
+const popup=document.getElementById("popup");
+const popupBox=document.getElementById("popupBox");
+
+let DATA=null;
+
+async function load(){
+  const res=await fetch("pot.json");
+  DATA=await res.json();
+  renderMonths();
+  checkTodayEvent();
+}
+
+function renderMonths(){
+  monthsDiv.innerHTML="";
+  calendar.innerHTML="";
+
+  for(let m=1;m<=12;m++){
+    const div=document.createElement("div");
+    div.className="month";
+    div.textContent=`2026年 ${m}月`;
+    div.onclick=()=>renderMonthDays(2026,m);
+    monthsDiv.appendChild(div);
+  }
+}
+
+function renderMonthDays(year,month){
+  calendar.innerHTML="";
+
+  const watered=new Set(Object.keys(DATA.messages||{}));
+  const events=new Set(Object.keys(DATA.specialEvents||{}));
+  const todayStr=new Date().toISOString().split("T")[0];
+
+  const firstDay=new Date(year,month-1,1);
+  const lastDay=new Date(year,month,0).getDate();
+
+  for(let d=1;d<=lastDay;d++){
+    const date=new Date(year,month-1,d);
+    if(date<startDate)continue;
+
+    const dateStr=date.toISOString().split("T")[0];
+
+    const div=document.createElement("div");
+    div.className="day gray";
+    div.textContent=d;
+
+    if(watered.has(dateStr))div.className="day watered";
+    if(events.has(dateStr))div.className="day event";
+    if(dateStr===todayStr)div.classList.add("today");
+
+    div.onclick=()=>showDetail(dateStr);
+
+    calendar.appendChild(div);
+  }
+}
+
+function showDetail(dateStr){
+  const msgs=DATA.messages?.[dateStr]||[];
+  const evs=DATA.specialEvents?.[dateStr]||[];
+
+  let html=`<div><b>📅 ${dateStr}</b></div>`;
+
+  if(!msgs.length&&!evs.length){
+    html+=`<div style="opacity:0.6">这一天没有记录 🌱</div>`;
+  }
+
+  msgs.forEach(m=>html+=`<div>💬 ${m}</div>`);
+  evs.forEach(e=>html+=`<div style="color:#8e44ad">✨ ${e}</div>`);
+
+  detail.innerHTML=html;
+}
+
+function checkTodayEvent(){
+  const today=new Date().toISOString().split("T")[0];
+  if(DATA.specialEvents?.[today]?.length){
+    showPopup(`✨ 神秘力量：${DATA.specialEvents[today].slice(-1)[0]}`);
+  }
+}
 
 function showPopup(text){
-popup.textContent=text;
-popup.style.display="block";
-setTimeout(()=>popup.style.display="none",3000);
+  popupBox.innerHTML=text+"<br><br><button onclick='popup.style.display=\"none\"'>知道了</button>";
+  popup.style.display="flex";
 }
 
-function showDayDetail(dateStr,data){
-const msgs=data.messages?.[dateStr]||[];
-const evs=data.specialEvents?.[dateStr]||[];
-
-let html=`<b>📅 ${dateStr}</b><br>`;
-if(!msgs.length&&!evs.length) html+=`<span style="opacity:0.6">这一天没有记录 🌱</span>`;
-msgs.forEach(m=>html+=`💬 ${m}<br>`);
-evs.forEach(e=>html+=`<span style="color:#8e44ad">✨ ${e}</span><br>`);
-detail.innerHTML=html;
-}
-
-function renderCalendar(data){
-calendar.innerHTML="";
-const start=new Date("2026-01-28");
-const today=new Date();
-const watered=new Set(Object.keys(data.messages||{}));
-const events=new Set(Object.keys(data.specialEvents||{}));
-const totalDays=Math.floor((today-start)/(86400000))+1;
-
-for(let i=0;i<totalDays;i++){
-const d=new Date(start);
-d.setDate(start.getDate()+i);
-const dateStr=d.toISOString().split("T")[0];
-
-const div=document.createElement("div");
-div.className="day gray";
-div.textContent=`${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;
-
-if(watered.has(dateStr))div.className="day watered";
-if(events.has(dateStr))div.className="day event";
-if(dateStr===today.toISOString().split("T")[0])div.classList.add("today");
-
-div.onclick=()=>showDayDetail(dateStr,data);
-calendar.appendChild(div);
-}
-}
-
-async function loadPot(){
-let snap=await potRef.get();
-let data=snap.exists()?snap.val():{currentDay:0,lastWatered:0,messages:{},specialEvents:{},matured:false};
-await potRef.set(data);
-
-dayText.textContent=`已浇水天数：${data.currentDay}`;
-
-const stage=Math.min(Math.floor(data.currentDay/40)+1,13);
-flowerImg.src=`./images/flower${stage}.png`;
-flowerImg.classList.remove("show");
-setTimeout(()=>flowerImg.classList.add("show"),50);
-
-renderCalendar(data);
-
-/* 当天神秘事件弹窗 */
-const todayKey=new Date().toISOString().split("T")[0];
-if(data.specialEvents?.[todayKey]?.length){
-showPopup(`✨ 神秘力量：${data.specialEvents[todayKey].slice(-1)[0]}`);
-}
-
-/* 成熟 */
-if(data.currentDay>=520&&!data.matured){
-showPopup("🎁 花已成熟");
-await potRef.set({...data,matured:true});
-}
-}
-
-waterBtn.onclick=async()=>{
-let snap=await potRef.get();
-let data=snap.val();
-
-const today=new Date().toDateString();
-const last=new Date(data.lastWatered).toDateString();
-if(today===last){alert("今天浇过了");return;}
-
-const msg=messageInput.value.trim();
-const todayKey=new Date().toISOString().split("T")[0];
-const messages=data.messages||{};
-if(msg){messages[todayKey]=messages[todayKey]||[];messages[todayKey].push(msg);}
-
-await potRef.set({...data,currentDay:data.currentDay+1,lastWatered:Date.now(),messages});
-messageInput.value="";
-loadPot();
-};
-
-loadPot();
+load();
 </script>
+
 </body>
 </html>
