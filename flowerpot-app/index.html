@@ -1,160 +1,251 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>快来种花吧</title>
-  <link rel="stylesheet" href="./style.css">
-  <style>
-    /* 覆盖部分样式保证动画和位置 */
-    .flower {
-      position: absolute;
-      bottom: 55px;
-      left: 50%;
-      transform: translateX(-50%) translateY(30px);
-      width: 130px;
-      z-index: 2;
-      opacity: 0;
-      transition: opacity 0.8s ease, transform 0.8s ease;
-    }
-    .flower.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>快来种花吧</title>
 
-    .popup {
-      position: fixed;
-      top: 12%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #ffe0eb;
-      padding: 14px 22px;
-      border-radius: 16px;
-      font-weight: bold;
-      color: #c44569;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-      display: none;
-      z-index: 999;
-    }
-  </style>
+<style>
+body{
+  background:#fff5f7;
+  font-family:system-ui;
+  margin:0;
+}
+
+.app{
+  max-width:420px;
+  margin:40px auto;
+  padding:25px;
+  background:white;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.12);
+}
+
+.flowerpot-container{
+  position:relative;
+  width:220px;
+  height:260px;
+  margin:80px auto 0;
+}
+
+.pot{
+  position:absolute;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:200px;
+}
+
+.flower{
+  position:absolute;
+  bottom:55px;
+  left:50%;
+  transform:translateX(-50%) translateY(30px);
+  width:130px;
+  opacity:0;
+  transition:0.8s;
+}
+.flower.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.controls{
+  margin-top:15px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+input{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+button{
+  padding:12px;
+  border-radius:14px;
+  border:none;
+  background:#ff8fab;
+  color:white;
+  cursor:pointer;
+}
+
+.popup{
+  position:fixed;
+  top:12%;
+  left:50%;
+  transform:translateX(-50%);
+  background:#ffe0eb;
+  padding:14px 22px;
+  border-radius:16px;
+  font-weight:bold;
+  color:#c44569;
+  display:none;
+}
+
+/* 日志 */
+.log-container{
+  margin-top:20px;
+  background:#fff6fa;
+  border-radius:14px;
+  padding:12px;
+}
+.log-list{
+  max-height:200px;
+  overflow-y:auto;
+  text-align:left;
+}
+.log-item{
+  padding:8px;
+  margin-bottom:6px;
+  border-radius:10px;
+  background:#ffe9f1;
+}
+.log-date{font-weight:bold;color:#c44569;}
+.log-event{color:#8e44ad;}
+</style>
 </head>
+
 <body>
 
-  <div class="app">
-    <h1>🌱 520天盆栽惊喜</h1>
+<div class="app">
+<h1>🌱 520天盆栽惊喜</h1>
 
-    <p id="dayText">已浇水天数：--</p>
+<p id="dayText">已浇水天数：--</p>
 
-    <!-- 花盆区域 -->
-    <div class="flowerpot-container">
-      <img src="./images/pot.png" class="pot" alt="花盆">
-      <img src="./images/flower1.png" class="flower" id="flowerImg" alt="花">
-    </div>
+<div class="flowerpot-container">
+<img src="./images/pot.png" class="pot">
+<img src="./images/flower1.png" class="flower" id="flowerImg">
+</div>
 
-    <!-- 操作区 -->
-    <div class="controls">
-      <input id="messageInput" placeholder="描述今天的心情或发生的事情吧~（选填）">
-      <button id="waterBtn">💧 今日浇水</button>
-    </div>
-  </div>
+<div class="controls">
+<input id="messageInput" placeholder="描述今天的心情（选填）">
+<button id="waterBtn">💧 今日浇水</button>
+</div>
 
-  <!-- 弹幕 -->
-  <div id="popup" class="popup"></div>
+<!-- 日志 -->
+<div class="log-container">
+<h3>📖 成长日志</h3>
+<div id="logList" class="log-list"></div>
+</div>
 
-  <!-- Firebase CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</div>
 
-  <script>
-    // Firebase 配置
-    const firebaseConfig = {
-      apiKey: "AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
-      authDomain: "flowerpotapp-d0c7a.firebaseapp.com",
-      databaseURL: "https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "flowerpotapp-d0c7a",
-      storageBucket: "flowerpotapp-d0c7a.firebasestorage.app",
-      messagingSenderId: "347864027088",
-      appId: "1:347864027088:web:ee3a267fb4f546bb5ef3d5"
-    };
+<div id="popup" class="popup"></div>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const potRef = db.ref("flowerPot");
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-    const dayText = document.getElementById("dayText");
-    const flowerImg = document.getElementById("flowerImg");
-    const waterBtn = document.getElementById("waterBtn");
-    const messageInput = document.getElementById("messageInput");
-    const popup = document.getElementById("popup");
+<script>
+const firebaseConfig={
+apiKey:"AIzaSy...",
+authDomain:"flowerpotapp-d0c7a.firebaseapp.com",
+databaseURL:"https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"flowerpotapp-d0c7a"
+};
 
-    const titles = [
-      "最佳浇水员 🌸","花园守护者 🌿","自然之友 🍃","春天使者 🌷","花园大师 🌹","爱心园丁 💖",
-      "终极花神 🌟","时间的朋友 ⏳","命运修剪者 ✂️","世界线守护人 🌌","花开即永恒 💫","终章之花 👑","成熟礼物拥有者 🎁"
-    ];
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const potRef=db.ref("flowerPot");
 
-    function showPopup(text){
-      popup.textContent = text;
-      popup.style.display = "block";
-      popup.classList.add("popup-animate");
-      setTimeout(()=>{
-        popup.style.display="none";
-        popup.classList.remove("popup-animate");
-      },3200);
-    }
+const dayText=document.getElementById("dayText");
+const flowerImg=document.getElementById("flowerImg");
+const waterBtn=document.getElementById("waterBtn");
+const messageInput=document.getElementById("messageInput");
+const popup=document.getElementById("popup");
+const logList=document.getElementById("logList");
 
-    async function loadPot(){
-      const snap = await potRef.get();
-      let data = snap.exists()? snap.val() : null;
-      if(!data){
-        data = {currentDay:0,lastWatered:0,messages:{},specialEvents:{},matured:false};
-        await potRef.set(data);
-      }
+function showPopup(text){
+popup.textContent=text;
+popup.style.display="block";
+setTimeout(()=>popup.style.display="none",3000);
+}
 
-      dayText.textContent = `已浇水天数：${data.currentDay ?? 0}`;
+function renderLogs(data){
+logList.innerHTML="";
+const messages=data.messages||{};
+const events=data.specialEvents||{};
+const allDates=new Set([...Object.keys(messages),...Object.keys(events)]);
+const dates=[...allDates].sort().reverse();
 
-      // 计算成长阶段
-      const stage = Math.min(Math.floor((data.currentDay ?? 0)/40)+1,13);
-      flowerImg.src = `./images/flower${stage}.png`;
-      flowerImg.classList.remove("show");
-      setTimeout(()=>{ flowerImg.classList.add("show"); },50);
+if(!dates.length){
+logList.innerHTML="<p style='opacity:0.6'>还没有记录 🌱</p>";
+return;
+}
 
-      // 每 40 天显示称号弹幕
-      if(data.currentDay >0 && data.currentDay %40 ===0){
-        const index = Math.min(Math.floor(data.currentDay/40)-1, titles.length-1);
-        showPopup(`获得称号：${titles[index]} ✨`);
-      }
+dates.forEach(d=>{
+const div=document.createElement("div");
+div.className="log-item";
 
-      // 显示前一天神秘力量
-      const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-      const yKey = yesterday.toISOString().split("T")[0];
-      const events = data.specialEvents?.[yKey] ?? [];
-      if(events.length>0){ showPopup(`✨ 神秘力量：${events[events.length-1]}`); }
+let html=`<div class="log-date">📅 ${d}</div>`;
 
-      // 成熟提示
-      if((data.currentDay ??0)>=520 && !data.matured){
-        showPopup("🎁 花已成熟，命运被彻底改写");
-        await potRef.set({...data,matured:true});
-      }
-    }
+(messages[d]||[]).forEach(m=>{
+html+=`<div>💬 ${m}</div>`;
+});
 
-    waterBtn.onclick=async()=>{
-      const snap = await potRef.get();
-      const data = snap.exists()? snap.val() : {currentDay:0,lastWatered:0,messages:{},specialEvents:{},matured:false};
-      const todayStr = new Date().toDateString();
-      const lastStr = new Date(data.lastWatered ?? 0).toDateString();
-      if(todayStr===lastStr){alert("今天已经浇过水啦 💧"); return;}
+(events[d]||[]).forEach(e=>{
+html+=`<div class="log-event">✨ ${e}</div>`;
+});
 
-      const msg = messageInput.value.trim();
-      const messages = data.messages ?? {};
-      const todayKey = new Date().toISOString().split("T")[0];
-      if(msg){ messages[todayKey] = messages[todayKey] ?? []; messages[todayKey].push(msg); }
+div.innerHTML=html;
+logList.appendChild(div);
+});
+}
 
-      await potRef.set({...data, currentDay:(data.currentDay??0)+1, lastWatered:Date.now(), messages});
-      messageInput.value="";
-      loadPot();
-    }
+async function loadPot(){
+let snap=await potRef.get();
+let data=snap.exists()?snap.val():{
+currentDay:0,lastWatered:0,messages:{},specialEvents:{},matured:false
+};
+await potRef.set(data);
 
-    loadPot();
-  </script>
+dayText.textContent=`已浇水天数：${data.currentDay}`;
+
+const stage=Math.min(Math.floor(data.currentDay/40)+1,13);
+flowerImg.src=`./images/flower${stage}.png`;
+flowerImg.classList.remove("show");
+setTimeout(()=>flowerImg.classList.add("show"),50);
+
+renderLogs(data);
+
+if(data.currentDay>=520&&!data.matured){
+showPopup("🎁 花已成熟");
+await potRef.set({...data,matured:true});
+}
+}
+
+waterBtn.onclick=async()=>{
+let snap=await potRef.get();
+let data=snap.val();
+
+const today=new Date().toDateString();
+const last=new Date(data.lastWatered).toDateString();
+if(today===last){alert("今天浇过了");return;}
+
+const msg=messageInput.value.trim();
+const messages=data.messages||{};
+const todayKey=new Date().toISOString().split("T")[0];
+
+if(msg){
+messages[todayKey]=messages[todayKey]||[];
+messages[todayKey].push(msg);
+}
+
+await potRef.set({
+...data,
+currentDay:data.currentDay+1,
+lastWatered:Date.now(),
+messages
+});
+
+messageInput.value="";
+loadPot();
+};
+
+loadPot();
+</script>
 </body>
 </html>
