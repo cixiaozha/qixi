@@ -2,195 +2,266 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>小盆栽成长记录</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>520天盆栽 · 月历版</title>
 
 <style>
-body{
-  font-family:sans-serif;
-  background:#f5f6fb;
-  text-align:center;
-}
+body{background:#fff5f7;font-family:system-ui;margin:0;}
+.app{max-width:420px;margin:40px auto;padding:25px;background:white;border-radius:20px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.12);}
 
-/* 月份网格 */
-#months{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  max-width:420px;
-  margin:10px auto;
-}
+.flowerpot-container{position:relative;width:220px;height:260px;margin:80px auto 0;}
+.pot{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:200px;}
+.flower{position:absolute;bottom:55px;left:50%;transform:translateX(-50%) translateY(30px);width:130px;opacity:0;transition:0.8s;}
+.flower.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-.month{
-  background:#e0e0e0;
-  padding:12px;
-  border-radius:10px;
-  cursor:pointer;
-}
-.month:hover{opacity:0.8;}
+.controls{margin-top:15px;display:flex;flex-direction:column;gap:10px;}
+input{padding:10px;border-radius:10px;border:1px solid #ccc;}
+button{padding:12px;border-radius:14px;border:none;background:#ff8fab;color:white;cursor:pointer;}
 
-/* 日期网格 */
-#calendar{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:6px;
-  max-width:420px;
-  margin:10px auto;
-}
+.popup{position:fixed;top:12%;left:50%;transform:translateX(-50%);background:#ffe0eb;padding:14px 22px;border-radius:16px;font-weight:bold;color:#c44569;display:none;}
 
-.day{
-  padding:10px 0;
-  border-radius:8px;
-  cursor:pointer;
-  font-size:14px;
-}
+.calendar-container{margin-top:20px;background:#fff6fa;border-radius:14px;padding:12px;}
+.month-selector{display:flex;justify-content:space-between;align-items:center;margin:10px 0;padding:0 10px;}
+.month-selector button{background:#ffb3c6;padding:8px 16px;font-size:14px;border:none;border-radius:20px;color:white;cursor:pointer;}
+.month-selector button:active{transform:scale(0.95);}
+#monthTitle{font-size:18px;font-weight:bold;color:#c44569;}
 
-.gray{background:#d6d6d6;}
-.watered{background:#000;color:#fff;}
-.event{background:gold;color:#000;}
-.today{border:2px solid red;}
+#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px;}
+.weekday{font-size:12px;color:#c44569;font-weight:500;padding:4px 0;}
+.day{padding:8px 0;border-radius:8px;font-size:13px;cursor:pointer;background:#eee;color:#aaa;}
+.day.watered{background:#222;color:#fff;}
+.day.event{background:#ffd700;color:#000;}
+.day.today{outline:2px solid #ff8fab;}
 
-/* 详情卡 */
-.day-detail{
-  margin:16px auto;
-  max-width:420px;
-  background:#fff0f5;
-  border-radius:12px;
-  padding:12px;
-  text-align:left;
-}
-
-/* 神秘弹窗 */
-#popup{
-  position:fixed;
-  top:0;left:0;right:0;bottom:0;
-  background:rgba(0,0,0,0.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-}
-
-#popupBox{
-  background:white;
-  padding:20px;
-  border-radius:12px;
-}
+.day-detail{margin-top:16px;background:#fff0f5;border-radius:14px;padding:12px;text-align:left;}
 </style>
 </head>
 
 <body>
 
-<h2>🌱 小盆栽成长记录</h2>
+<div class="app">
+<h2>🌱 520天盆栽</h2>
+<p id="dayText">已浇水天数：--</p>
 
-<div id="months"></div>
+<div class="flowerpot-container">
+<img src="./images/pot.png" class="pot" alt="pot">
+<img src="./images/flower1.png" class="flower" id="flowerImg" alt="flower">
+</div>
+
+<div class="controls">
+<input id="messageInput" placeholder="写点今天的话（选填）">
+<button id="waterBtn">💧 今日浇水</button>
+</div>
+
+<div class="calendar-container">
+<h3>📅 月历 · 2026</h3>
+<div class="month-selector">
+<button id="prevMonthBtn">◀</button>
+<span id="monthTitle">2026年1月</span>
+<button id="nextMonthBtn">▶</button>
+</div>
 <div id="calendar"></div>
+</div>
 
 <div class="day-detail">
-  <h3>📜 当天记录</h3>
-  <div id="detailContent">点击某一天查看 🌱</div>
+<h3>📜 当天记录</h3>
+<div id="detailContent">点击日历查看某一天 🌱</div>
 </div>
 
-<div id="popup">
-  <div id="popupBox"></div>
 </div>
+
+<div id="popup" class="popup"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-const startDate = new Date("2026-01-28");
-const monthsDiv = document.getElementById("months");
-const calendar = document.getElementById("calendar");
-const detail = document.getElementById("detailContent");
-const popup = document.getElementById("popup");
-const popupBox = document.getElementById("popupBox");
+// Firebase配置（保持原样）
+const firebaseConfig={
+apiKey:"AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
+authDomain:"flowerpotapp-d0c7a.firebaseapp.com",
+databaseURL:"https://flowerpotapp-d0c7a-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"flowerpotapp-d0c7a"
+};
 
-let DATA = null;
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+const potRef=db.ref("flowerPot");
 
-/* 读取 JSON */
-async function load(){
-  try{
-    const res = await fetch("pot.json");
-    DATA = await res.json();
-  }catch(e){
-    DATA = {messages:{}, specialEvents:{}};
-  }
-  renderMonths();
-  checkTodayEvent();
-}
+const dayText=document.getElementById("dayText");
+const flowerImg=document.getElementById("flowerImg");
+const waterBtn=document.getElementById("waterBtn");
+const messageInput=document.getElementById("messageInput");
+const popup=document.getElementById("popup");
+const calendar=document.getElementById("calendar");
+const detail=document.getElementById("detailContent");
+const monthTitle=document.getElementById("monthTitle");
+const prevBtn=document.getElementById("prevMonthBtn");
+const nextBtn=document.getElementById("nextMonthBtn");
 
-/* 渲染月份 */
-function renderMonths(){
-  monthsDiv.innerHTML="";
-  calendar.innerHTML="";
-
-  for(let m=1;m<=12;m++){
-    const div=document.createElement("div");
-    div.className="month";
-    div.textContent=`2026年 ${m}月`;
-    div.onclick=()=>renderMonthDays(2026,m);
-    monthsDiv.appendChild(div);
-  }
-}
-
-/* 渲染某个月的日期 */
-function renderMonthDays(year,month){
-  calendar.innerHTML="";
-
-  const watered = new Set(Object.keys(DATA.messages||{}));
-  const events = new Set(Object.keys(DATA.specialEvents||{}));
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  const lastDay = new Date(year,month,0).getDate();
-
-  for(let d=1; d<=lastDay; d++){
-    const date = new Date(year,month-1,d);
-    if(date < startDate) continue;
-
-    const dateStr = date.toISOString().split("T")[0];
-
-    const div=document.createElement("div");
-    div.className="day gray";
-    div.textContent=d;
-
-    if(watered.has(dateStr)) div.className="day watered";
-    if(events.has(dateStr)) div.className="day event";
-    if(dateStr===todayStr) div.classList.add("today");
-
-    div.onclick=()=>showDetail(dateStr);
-
-    calendar.appendChild(div);
-  }
-}
-
-/* 点击日期显示详情（不弹窗） */
-function showDetail(dateStr){
-  const msgs = DATA.messages?.[dateStr] || [];
-  const evs = DATA.specialEvents?.[dateStr] || [];
-
-  let html=`<div><b>📅 ${dateStr}</b></div>`;
-
-  if(!msgs.length && !evs.length){
-    html+=`<div style="opacity:0.6">这一天没有记录 🌱</div>`;
-  }
-
-  msgs.forEach(m=> html+=`<div>💬 ${m}</div>`);
-  evs.forEach(e=> html+=`<div style="color:#8e44ad">✨ ${e}</div>`);
-
-  detail.innerHTML=html;
-}
-
-/* 今日神秘事件弹窗 */
-function checkTodayEvent(){
-  const today = new Date().toISOString().split("T")[0];
-  if(DATA.specialEvents?.[today]?.length){
-    showPopup(`✨ 神秘力量：${DATA.specialEvents[today].slice(-1)[0]}`);
-  }
-}
+// 当前显示的月份（默认2026年1月）
+let currentYear=2026;
+let currentMonth=0; // 0 = 一月
 
 function showPopup(text){
-  popupBox.innerHTML = text + "<br><br><button onclick='popup.style.display=\"none\"'>知道了</button>";
-  popup.style.display="flex";
+popup.textContent=text;
+popup.style.display="block";
+setTimeout(()=>popup.style.display="none",3000);
 }
 
-load();
-</script>
+function showDayDetail(dateStr,data){
+const msgs=data.messages?.[dateStr]||[];
+const evs=data.specialEvents?.[dateStr]||[];
 
+let html=`<b>📅 ${dateStr}</b><br>`;
+if(!msgs.length&&!evs.length) html+=`<span style="opacity:0.6">这一天没有记录 🌱</span>`;
+msgs.forEach(m=>html+=`💬 ${m}<br>`);
+evs.forEach(e=>html+=`<span style="color:#8e44ad">✨ ${e}</span><br>`);
+detail.innerHTML=html;
+}
+
+function renderMonth(year,month,data){
+// 更新标题
+monthTitle.textContent=`${year}年${month+1}月`;
+
+// 获取当月第一天和最后一天
+const firstDay=new Date(year,month,1);
+const lastDay=new Date(year,month+1,0);
+const daysInMonth=lastDay.getDate();
+
+// 当月1号是星期几（0=星期日，但我们需要星期一开头，所以调整）
+let startWeekday=firstDay.getDay(); // 0周日 1周一 ... 6周六
+// 转成以周一为第一天：周日=6，周一=0，周二=1 ...
+const mondayStart=(startWeekday===0)?6:startWeekday-1;
+
+// 生成星期标题（周一到周日）
+const weekdays=['一','二','三','四','五','六','日'];
+calendar.innerHTML=weekdays.map(w=>`<div class="weekday">${w}</div>`).join('');
+
+// 填充空白格子
+for(let i=0;i<mondayStart;i++){
+const empty=document.createElement("div");
+empty.className="day";
+empty.style.background="transparent";
+empty.style.cursor="default";
+calendar.appendChild(empty);
+}
+
+// 填充日期
+const today=new Date();
+for(let d=1;d<=daysInMonth;d++){
+const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const div=document.createElement("div");
+div.className="day";
+div.textContent=d;
+
+// 根据数据添加样式
+if(data.messages?.[dateStr]) div.classList.add("watered");
+if(data.specialEvents?.[dateStr]) div.classList.add("event");
+
+// 判断是否是今天
+if(year===today.getFullYear() && month===today.getMonth() && d===today.getDate()){
+div.classList.add("today");
+}
+
+// 点击事件
+div.onclick=()=>showDayDetail(dateStr,data);
+calendar.appendChild(div);
+}
+
+// 补全最后一行空白（保持整齐，可选）
+const totalCells=mondayStart+daysInMonth;
+const remainder=totalCells%7;
+if(remainder!==0){
+for(let i=0;i<7-remainder;i++){
+const empty=document.createElement("div");
+empty.className="day";
+empty.style.background="transparent";
+empty.style.cursor="default";
+calendar.appendChild(empty);
+}
+}
+}
+
+async function loadPot(){
+let snap=await potRef.get();
+let data=snap.exists()?snap.val():{currentDay:0,lastWatered:0,messages:{},specialEvents:{},matured:false};
+// 确保数据结构完整
+if(!data.messages) data.messages={};
+if(!data.specialEvents) data.specialEvents={};
+await potRef.set(data); // 保存默认结构
+
+dayText.textContent=`已浇水天数：${data.currentDay}`;
+
+const stage=Math.min(Math.floor(data.currentDay/40)+1,13);
+flowerImg.src=`./images/flower${stage}.png`;
+flowerImg.classList.remove("show");
+setTimeout(()=>flowerImg.classList.add("show"),50);
+
+// 渲染当前月份
+renderMonth(currentYear,currentMonth,data);
+
+// 当天神秘事件弹窗
+const todayKey=new Date().toISOString().split("T")[0];
+if(data.specialEvents?.[todayKey]?.length){
+showPopup(`✨ 神秘力量：${data.specialEvents[todayKey].slice(-1)[0]}`);
+}
+
+// 成熟提示（520天）
+if(data.currentDay>=520 && !data.matured){
+showPopup("🎁 花已成熟");
+await potRef.set({...data,matured:true});
+}
+}
+
+waterBtn.onclick=async()=>{
+let snap=await potRef.get();
+let data=snap.val();
+
+const today=new Date().toDateString();
+const last=new Date(data.lastWatered).toDateString();
+if(today===last){alert("今天浇过了");return;}
+
+const msg=messageInput.value.trim();
+const todayKey=new Date().toISOString().split("T")[0];
+const messages=data.messages||{};
+if(msg){
+if(!messages[todayKey]) messages[todayKey]=[];
+messages[todayKey].push(msg);
+}
+
+await potRef.set({
+...data,
+currentDay:data.currentDay+1,
+lastWatered:Date.now(),
+messages:messages
+});
+
+messageInput.value="";
+loadPot(); // 刷新所有视图
+};
+
+// 月份切换逻辑
+prevBtn.onclick=()=>{
+currentMonth--;
+if(currentMonth<0){
+currentMonth=11;
+currentYear--;
+}
+loadPot(); // 重新获取数据并刷新月历
+};
+
+nextBtn.onclick=()=>{
+currentMonth++;
+if(currentMonth>11){
+currentMonth=0;
+currentYear++;
+}
+loadPot();
+};
+
+// 启动
+loadPot();
+</script>
 </body>
 </html>
