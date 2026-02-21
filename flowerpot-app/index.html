@@ -76,7 +76,7 @@ button{padding:12px;border-radius:14px;border:none;background:#ff8fab;color:whit
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-// Firebase配置（保持原样）
+// Firebase配置
 const firebaseConfig={
 apiKey:"AIzaSyDc27UjdsySJAz4-1NpY0Cgs3Jq3402o70",
 authDomain:"flowerpotapp-d0c7a.firebaseapp.com",
@@ -98,6 +98,17 @@ const detail=document.getElementById("detailContent");
 const monthTitle=document.getElementById("monthTitle");
 const prevBtn=document.getElementById("prevMonthBtn");
 const nextBtn=document.getElementById("nextMonthBtn");
+
+// 获取北京时间日期的函数（解决凌晨记录问题）
+function getBeijingDateKey() {
+  const now = new Date();
+  // 转换为北京时间（UTC+8）
+  const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+  const year = beijingTime.getUTCFullYear();
+  const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 // 当前显示的月份（默认2026年1月）
 let currentYear=2026;
@@ -159,8 +170,9 @@ div.textContent=d;
 if(data.messages?.[dateStr]) div.classList.add("watered");
 if(data.specialEvents?.[dateStr]) div.classList.add("event");
 
-// 判断是否是今天
-if(year===today.getFullYear() && month===today.getMonth() && d===today.getDate()){
+// 判断是否是今天（使用北京时间）
+const beijingNow = new Date(new Date().getTime() + (8 * 60 * 60 * 1000));
+if(year===beijingNow.getUTCFullYear() && month===beijingNow.getUTCMonth() && d===beijingNow.getUTCDate()){
 div.classList.add("today");
 }
 
@@ -169,7 +181,7 @@ div.onclick=()=>showDayDetail(dateStr,data);
 calendar.appendChild(div);
 }
 
-// 补全最后一行空白（保持整齐，可选）
+// 补全最后一行空白
 const totalCells=mondayStart+daysInMonth;
 const remainder=totalCells%7;
 if(remainder!==0){
@@ -201,8 +213,8 @@ setTimeout(()=>flowerImg.classList.add("show"),50);
 // 渲染当前月份
 renderMonth(currentYear,currentMonth,data);
 
-// 当天神秘事件弹窗
-const todayKey=new Date().toISOString().split("T")[0];
+// 当天神秘事件弹窗（使用北京时间）
+const todayKey=getBeijingDateKey();
 if(data.specialEvents?.[todayKey]?.length){
 showPopup(`✨ 神秘力量：${data.specialEvents[todayKey].slice(-1)[0]}`);
 }
@@ -223,7 +235,8 @@ const last=new Date(data.lastWatered).toDateString();
 if(today===last){alert("今天浇过了");return;}
 
 const msg=messageInput.value.trim();
-const todayKey=new Date().toISOString().split("T")[0];
+// 使用北京时间作为记录key
+const todayKey=getBeijingDateKey();
 const messages=data.messages||{};
 if(msg){
 if(!messages[todayKey]) messages[todayKey]=[];
@@ -265,4 +278,3 @@ loadPot();
 </script>
 </body>
 </html>
-
